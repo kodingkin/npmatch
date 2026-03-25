@@ -11,7 +11,7 @@ A one-time seed script (also runs by needs via GitHub Actions) that populates th
 
 ### Design Decisions
 
-- **npm-rank over BigQuery** — `bigquery-public-data.npmjs` dataset no longer exists; npm-rank provides a pre-ranked list of popular packages with richer metadata including keywords
+- **npm-rank over BigQuery** — `bigquery-public-data.npmjs` dataset doesn't contain data like description or keywords; npm-rank provides a pre-ranked list of popular packages with richer metadata including keywords
 - **Deduplication by name** — source JSON contains ~4,600 duplicate entries; deduped to ~5,100 unique packages
 - **Embedding format** — name + description + keywords concatenated for richer semantic signal than description alone
 - **Batch size 100** — balances OpenAI rate limits and reliability; a failed batch doesn't lose the entire run
@@ -33,6 +33,6 @@ npm install
 tsx src/index.ts
 ```
 
-### Scheduled Refresh
+### Scheduled Refresh (WIP)
 
 Runs every Sunday 2am UTC via GitHub Actions `workflow_dispatch` + `schedule`. Pulls the latest image from ECR and re-runs the full pipeline.
