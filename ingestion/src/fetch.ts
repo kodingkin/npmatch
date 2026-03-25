@@ -1,17 +1,16 @@
 import https from "https";
 
+import { config } from "./env";
+
 export interface NpmPackage {
   name: string;
   description: string;
   keywords: string[];
   version: string;
-  npm_url: string;
 }
 
-const RAW_JSON_URL =
-  "https://github.com/tristan-f-r/npm-rank/releases/download/latest/raw.json";
-
-const LIMIT = 3;
+const RAW_JSON_URL = config.rawJsonUrl;
+const LIMIT = config.maxPackages;
 
 function fetchJson(url: string): Promise<any[]> {
   return new Promise((resolve, reject) => {
@@ -42,15 +41,21 @@ export async function fetchPackages(): Promise<NpmPackage[]> {
 
   const raw = await fetchJson(RAW_JSON_URL);
 
+  const seen = new Set<string>();
+
   const packages = raw
-    .filter((pkg: any) => pkg.name && pkg.description?.trim())
+    .filter((pkg: any) => {
+      if (!pkg.name || !pkg.description?.trim()) return false;
+      if (seen.has(pkg.name)) return false;
+      seen.add(pkg.name);
+      return true;
+    })
     .slice(0, LIMIT)
     .map((pkg: any): NpmPackage => ({
       name: pkg.name,
       description: pkg.description,
       keywords: Array.isArray(pkg.keywords) ? pkg.keywords : [],
       version: pkg.version ?? "unknown",
-      npm_url: pkg.links?.npm ?? `https://www.npmjs.com/package/${pkg.name}`,
     }));
 
   console.log(`Fetched ${packages.length} packages`);

@@ -1,17 +1,19 @@
+import { embedPackages } from "./embed";
 import { fetchPackages } from "./fetch";
+import { upsertPackages } from "./upsert";
 
 async function main() {
   try {
     const packages = await fetchPackages();
+    
+    const embedded = await embedPackages(packages);
 
-    console.log(`\n Done. ${packages.length} packages fetched.`);
-    console.log("\nSample (first 3):");
-    packages.slice(0, 3).forEach((pkg) => {
-      console.log(`  - ${pkg.name}`);
-      console.log(`    ${pkg.description.slice(0, 80)}...`);
-    });
+    await upsertPackages(embedded);
+    
+    console.log("\n✅ Ingestion complete.");
+    process.exit(0);
   } catch (err) {
-    console.error("Fetch failed: ", err);
+    console.error("❌ Failed:", err);
     process.exit(1);
   }
 }

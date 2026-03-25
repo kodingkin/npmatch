@@ -11,7 +11,10 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "https": "^1.0.0"
+    "@pinecone-database/pinecone": "^7.1.0",
+    "dotenv": "^17.3.1",
+    "https": "^1.0.0",
+    "openai": "^6.32.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
