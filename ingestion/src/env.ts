@@ -1,4 +1,6 @@
-require("dotenv").config()
+import { loadEnvFile } from 'node:process';
+
+loadEnvFile();
 
 function getEnvNumber(key: string, defaultValue: number): number {
   const value = process.env[key]?.trim();
