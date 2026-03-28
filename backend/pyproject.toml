@@ -13,3 +13,8 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "uvicorn>=0.42.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.7",
+]
