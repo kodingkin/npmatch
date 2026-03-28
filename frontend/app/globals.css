@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/* Custom fonts via @theme in Tailwind v4 */
+@theme {
+  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "DM Sans", sans-serif;
+  --color-npm-red: #CB3837;
+  --color-npm-red-dim: rgba(203, 56, 55, 0.15);
+}
+
+/* Blinking cursor for streaming text */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink::after {
+  content: "▋";
+  display: inline-block;
+  color: #CB3837;
+  animation: blink 0.8s step-start infinite;
+  margin-left: 1px;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #1a1a1a 25%,
+    #252525 50%,
+    #1a1a1a 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+/* Markdown prose styles */
+.prose-npm {
+  color: #c8c8c8;
+  font-size: 0.925rem;
+  line-height: 1.75;
+}
+
+.prose-npm h1,
+.prose-npm h2,
+.prose-npm h3 {
+  color: #e8e8e8;
+  font-weight: 600;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+
+.prose-npm p {
+  margin-bottom: 0.875em;
+}
+
+.prose-npm code {
+  font-family: "JetBrains Mono", monospace;
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.85em;
+  color: #CB3837;
+}
+
+.prose-npm pre {
+  background: #111111;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.prose-npm pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #d4d4d4;
+}
+
+.prose-npm ul,
+.prose-npm ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.875em;
+}
+
+.prose-npm li {
+  margin-bottom: 0.3em;
+}
+
+.prose-npm strong {
+  color: #e8e8e8;
+  font-weight: 600;
+}
+
+.prose-npm a {
+  color: #CB3837;
+  text-decoration: none;
+}
+
+.prose-npm a:hover {
+  text-decoration: underline;
+}
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.35s ease forwards;
+}
+
+/* Subtle grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-color: #0a0a0a;
+}
+
+html, body {
+  background-color: #0a0a0a;
+  color: #e8e8e8;
+  min-height: 100vh;
+  font-family: "DM Sans", sans-serif;
+}
