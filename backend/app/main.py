@@ -6,9 +6,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.models import SearchRequest
 from app.search import embed_query, vector_search
@@ -26,6 +29,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="npmatch", version="1.0.0", lifespan=lifespan)
 
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
 allowed_origins = os.environ.get(
     "ALLOWED_ORIGINS",
     "http://localhost:3000,https://npmatch.vercel.app",
@@ -39,20 +45,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
 
 @app.post("/api/search")
-async def search(request: SearchRequest):
+@limiter.limit("2/minute")
+async def search(request: Request, body: SearchRequest):
     logger.info(
-        f"Search request: query='{request.query}' framework={request.framework} priorities={request.priorities}"
+        f"Search request: query='{body.query}' framework={body.framework} priorities={body.priorities}"
     )
 
     try:
-        embedding = await embed_query(request.query)
+        embedding = await embed_query(body.query)
     except Exception as e:
         logger.error(f"Embedding failed: {e}")
         raise HTTPException(status_code=502, detail="Failed to embed query")
@@ -89,10 +95,10 @@ async def search(request: SearchRequest):
 
         try:
             async for chunk in stream_response(
-                query=request.query,
+                query=body.query,
                 packages=packages,
-                framework=request.framework,
-                priorities=request.priorities,
+                framework=body.framework,
+                priorities=body.priorities,
             ):
                 yield f"data: {chunk}\n\n"
         except Exception as e:

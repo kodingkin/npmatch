@@ -16,7 +16,7 @@ async def embed_query(text: str) -> list[float]:
     return response.data[0].embedding
 
 
-async def vector_search(embedding: list[float], top_k: int = 5) -> list[dict]:
+async def vector_search(embedding: list[float], top_k: int = 6) -> list[dict]:
     results = _index.query(
         vector=embedding,
         top_k=top_k,
