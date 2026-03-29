@@ -43,8 +43,8 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full transition-colors ${
-              ok === null ? "bg-yellow-500/80" :
-              ok ? "bg-emerald-500/80" : "bg-red-500/80"
+              ok === null ? "bg-yellow-500/80 animate-pulse" :
+              ok ? "bg-emerald-500/80 animate-pulse" : "bg-red-500/80 animate-pulse"
             }`} />
             <span className="text-[10px] font-mono text-white/30">
               {ok === null ? "checking…" : ok ? "api ok" : "api down"}
@@ -134,9 +134,22 @@ export default function Home() {
 
         {/* Done — subtle footer note */}
         {isDone && (
-          <p className="text-[11px] font-mono text-white/20 text-center">
-            Showing top 6 results · Vector similarity search via Pinecone
-          </p>
+          <>
+            <p className="text-[11px] font-mono text-white/20 text-center">
+              Showing top 6 results · Vector similarity search via Pinecone
+            </p>
+            <p className="text-[11px] font-mono text-white/20 text-center">
+              <Link
+                href="https://github.com/kodingkin/npmatch"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/30 hover:text-white/60 transition-colors no-underline"
+              >
+                Github
+                <Link.Icon />
+              </Link>
+            </p>
+          </>
         )}
       </div>
     </main>
