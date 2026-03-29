@@ -3,8 +3,6 @@
 import { useCallback, useState } from "react";
 import type { Framework, NpmPackage, Priority, SearchState } from "@/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
 const initialState: SearchState = {
   status: "idle",
   packages: [],
@@ -27,7 +25,7 @@ export function useSearch() {
       let packagesReceived = false;
 
       try {
-        const response = await fetch(`${API_URL}/api/search`, {
+        const response = await fetch(`/api/search`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

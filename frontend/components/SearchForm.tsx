@@ -62,7 +62,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
             "bg-white/5 border border-white/10 rounded-xl",
             "px-4 py-3 text-sm font-mono text-white/90",
             "placeholder:text-white/25",
-            "focus:outline-none focus:border-npm-red",
+            "focus:outline-none focus:border-npm-red focus:ring-0",
             "hover:border-white/20",
             "transition-colors duration-200",
             "disabled:opacity-50 disabled:cursor-not-allowed",

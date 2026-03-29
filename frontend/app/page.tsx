@@ -6,10 +6,12 @@ import { PackageCard, PackageCardSkeleton } from "@/components/PackageCard";
 import { LlmPanel } from "@/components/LlmPanel";
 import { EmptyState, ErrorState } from "@/components/StatusStates";
 import { useSearch } from "@/hooks/useSearch";
+import { useHealthCheck } from "@/hooks/useHealthCheck";
 
 const SKELETON_COUNT = 3;
 
 export default function Home() {
+  const ok = useHealthCheck();
   const { state, search, reset } = useSearch();
   const { status, packages, llmText, errorMessage } = state;
 
@@ -30,8 +32,13 @@ export default function Home() {
             <span className="text-white/30 text-xs font-mono">/ find the right package</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
-            <span className="text-[10px] font-mono text-white/30">api ok</span>
+            <span className={`w-2 h-2 rounded-full transition-colors ${
+              ok === null ? "bg-yellow-500/80" :
+              ok ? "bg-emerald-500/80" : "bg-red-500/80"
+            }`} />
+            <span className="text-[10px] font-mono text-white/30">
+              {ok === null ? "checking…" : ok ? "api ok" : "api down"}
+            </span>
           </div>
         </div>
       </header>

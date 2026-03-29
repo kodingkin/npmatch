@@ -6,9 +6,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.models import SearchRequest
 from app.search import embed_query, vector_search
@@ -26,6 +29,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="npmatch", version="1.0.0", lifespan=lifespan)
 
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+
 allowed_origins = os.environ.get(
     "ALLOWED_ORIGINS",
     "http://localhost:3000,https://npmatch.vercel.app",
@@ -39,6 +45,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+SECRET = os.getenv("API_SECRET")
+
+app.add_middleware("http")
+async def verify_secret(request: Request, call_next):
+    if request.url.path.startswith("/api/"):
+        if request.headers.get("X-Secret") != SECRET:
+            return JSONResponse({"detail": "forbidden"}, status_code=403)
+    return await call_next(request)
+
 
 @app.get("/health")
 async def health():
@@ -46,6 +61,7 @@ async def health():
 
 
 @app.post("/api/search")
+@limiter.limit("5/minute")
 async def search(request: SearchRequest):
     logger.info(
         f"Search request: query='{request.query}' framework={request.framework} priorities={request.priorities}"
