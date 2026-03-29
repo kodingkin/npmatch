@@ -18,8 +18,6 @@ npm run dev
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-For production, set `NEXT_PUBLIC_API_URL` to your ALB DNS or custom domain in Vercel's environment settings.
-
 ## Project structure
 
 ```
@@ -44,9 +42,9 @@ src/
 
 - `Button` — submit + retry/reset actions
 - `Textarea` — main query input
-- `Select` / `SelectItem` — framework selector
+- `Select` — framework selector
 - `Chip` — priority tag toggles
-- `Card` / `CardBody` / `CardFooter` — package cards, LLM panel, status states
+- `Card` — package cards, LLM panel, status states
 - `Spinner` — HeroUI dark-themed spinner, used in loading states and section headers
 - `Link` — npm URL links
 - `Divider` — section separator
@@ -66,5 +64,5 @@ The hook always splits on `\n` and processes line by line to handle this correct
 - JetBrains Mono for all code/mono elements, DM Sans for prose
 - Subtle dot-grid background for depth
 - Skeleton shimmer animation while waiting for `event: packages`
-- Blinking cursor (`cursor-blink` CSS class) while LLM is streaming
+- Blinking cursor while LLM is streaming
 - `fade-in-up` keyframe animation on cards and panels as they appear

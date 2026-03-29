@@ -63,7 +63,7 @@ Health check: `GET http://localhost:8000/health`
 
 ### `POST /api/search`
 
-Embeds the query, retrieves top 5 matching packages from Pinecone, and streams an LLM recommendation back as SSE.
+Embeds the query, retrieves top 6 matching packages from Pinecone, and streams an LLM recommendation back as SSE.
 
 **Request**
 
@@ -135,16 +135,6 @@ docker build -t npmatch-backend .
 ```bash
 docker run -p 8000:8000 --env-file .env npmatch-backend
 ```
-
-### docker-compose (full stack local)
-
-From the project root:
-
-```bash
-docker-compose up
-```
-
----
 
 ## Linting
 
