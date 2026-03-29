@@ -7,7 +7,7 @@ export function useHealthCheck(intervalMs = 60000) {
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch("/api/health");
+        const res = await fetch("/api/search/health");
         setOk(res.ok);
       } catch {
         setOk(false);

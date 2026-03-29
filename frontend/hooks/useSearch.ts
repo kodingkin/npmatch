@@ -83,7 +83,7 @@ export function useSearch() {
                 status: packagesReceived ? "done" : "empty",
               }));
             } else if (line.startsWith("data: ")) {
-              const chunk = line.slice(6);
+              const chunk = line.slice(6).replace(/\\n/g, '\n');;
               setState((s) => ({
                 ...s,
                 status: "streaming",

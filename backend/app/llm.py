@@ -48,7 +48,10 @@ Instructions:
 - If priorities or framework filters were provided, factor them in.
 - If no package is a strong fit, say so honestly rather than forcing a recommendation.
 - Keep your response concise and practical — this is for a developer who wants to ship, not read an essay.
-- Format your response in Markdown."""
+- Format your response in Markdown with proper blank lines between sections.
+- Use bullet points (`-`) for each package recommendation.
+- Start each package with `### package-name` as a header.
+- Leave a blank line between each package block."""
 
 
 async def stream_response(
@@ -69,4 +72,4 @@ async def stream_response(
     async for chunk in stream:
         delta = chunk.choices[0].delta.content
         if delta is not None:
-            yield delta
+            yield delta.replace("\n", "\\n")

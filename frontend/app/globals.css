@@ -140,4 +140,5 @@ html, body {
   color: #e8e8e8;
   min-height: 100vh;
   font-family: "DM Sans", sans-serif;
+  overscroll-behavior-x: none;
 }

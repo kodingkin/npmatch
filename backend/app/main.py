@@ -45,30 +45,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SECRET = os.getenv("API_SECRET")
-
-app.add_middleware("http")
-async def verify_secret(request: Request, call_next):
-    if request.url.path.startswith("/api/"):
-        if request.headers.get("X-Secret") != SECRET:
-            return JSONResponse({"detail": "forbidden"}, status_code=403)
-    return await call_next(request)
-
-
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
 
 @app.post("/api/search")
-@limiter.limit("5/minute")
-async def search(request: SearchRequest):
+@limiter.limit("2/minute")
+async def search(request: Request, body: SearchRequest):
     logger.info(
-        f"Search request: query='{request.query}' framework={request.framework} priorities={request.priorities}"
+        f"Search request: query='{body.query}' framework={body.framework} priorities={body.priorities}"
     )
 
     try:
-        embedding = await embed_query(request.query)
+        embedding = await embed_query(body.query)
     except Exception as e:
         logger.error(f"Embedding failed: {e}")
         raise HTTPException(status_code=502, detail="Failed to embed query")
@@ -105,10 +95,10 @@ async def search(request: SearchRequest):
 
         try:
             async for chunk in stream_response(
-                query=request.query,
+                query=body.query,
                 packages=packages,
-                framework=request.framework,
-                priorities=request.priorities,
+                framework=body.framework,
+                priorities=body.priorities,
             ):
                 yield f"data: {chunk}\n\n"
         except Exception as e:

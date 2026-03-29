@@ -1,12 +1,13 @@
 "use client";
 
-import { Separator, Spinner } from "@heroui/react";
+import { Link, Separator, Spinner } from "@heroui/react";
 import { SearchForm } from "@/components/SearchForm";
 import { PackageCard, PackageCardSkeleton } from "@/components/PackageCard";
 import { LlmPanel } from "@/components/LlmPanel";
 import { EmptyState, ErrorState } from "@/components/StatusStates";
 import { useSearch } from "@/hooks/useSearch";
 import { useHealthCheck } from "@/hooks/useHealthCheck";
+import { useEffect, useRef } from "react";
 
 const SKELETON_COUNT = 3;
 
@@ -14,6 +15,15 @@ export default function Home() {
   const ok = useHealthCheck();
   const { state, search, reset } = useSearch();
   const { status, packages, llmText, errorMessage } = state;
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isActive) {
+      requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
+    }
+  }, [llmText, status]);
 
   const isLoading = status === "loading";
   const isStreaming = status === "streaming";
@@ -26,9 +36,9 @@ export default function Home() {
       <header className="border-b border-white/5 bg-black/60 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 h-12 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-mono font-semibold text-sm text-white/90 tracking-tight">
+            <Link href={"/"} className="font-mono font-semibold text-sm text-white/90 tracking-tight no-underline">
               <span className="text-npm-red">npm</span>atch
-            </span>
+            </Link>
             <span className="text-white/30 text-xs font-mono">/ find the right package</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -100,6 +110,7 @@ export default function Home() {
                   {isStreaming && <Spinner size="sm" color="accent" />}
                 </div>
                 <LlmPanel text={llmText} isStreaming={isStreaming} />
+                <div ref={bottomRef} />
               </section>
             )}
           </div>
@@ -124,7 +135,7 @@ export default function Home() {
         {/* Done — subtle footer note */}
         {isDone && (
           <p className="text-[11px] font-mono text-white/20 text-center">
-            Showing top 5 results · Vector similarity search via Pinecone
+            Showing top 6 results · Vector similarity search via Pinecone
           </p>
         )}
       </div>
