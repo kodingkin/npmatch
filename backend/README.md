@@ -1,6 +1,6 @@
 # npmatch — backend
 
-FastAPI backend for [npmatch](https://npmatch.vercel.app)
+FastAPI backend for [npmatch](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 
 Receives a user query, retrieves relevant packages via Pinecone vector search, and streams an LLM-synthesized recommendation back to the frontend via SSE.
 
@@ -34,7 +34,13 @@ cd npmatch/backend
 uv venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 uv sync
+
+uv run uvicorn app.main:app --reload --port 8000
 ```
+
+API will be available at `http://localhost:8000`.
+
+Health check: `GET http://localhost:8000/health`
 
 ### Environment variables
 
@@ -46,16 +52,6 @@ PINECONE_API_KEY=...
 PINECONE_INDEX_NAME=npmatch
 ALLOWED_ORIGINS=http://localhost:3000,https://npmatch.vercel.app
 ```
-
-### Run
-
-```bash
-uv run uvicorn app.main:app --reload --port 8000
-```
-
-API will be available at `http://localhost:8000`.
-
-Health check: `GET http://localhost:8000/health`
 
 ---
 
@@ -142,7 +138,6 @@ docker run -p 8000:8000 --env-file .env npmatch-backend
 uv run ruff check app/        # lint
 uv run ruff check app/ --fix  # auto-fix
 uv run ruff format app/       # format
-uv run mypy app/              # type check
 ```
 
 ---

@@ -3,13 +3,9 @@ import json
 import logging
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
-
-load_dotenv()
-
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
-
+from fastapi.responses import StreamingResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -17,8 +13,11 @@ from app.models import SearchRequest
 from app.search import embed_query, vector_search
 from app.llm import stream_response
 
+load_dotenv()
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,6 +43,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/health")
 async def health():
@@ -71,8 +71,10 @@ async def search(request: Request, body: SearchRequest):
 
     if not packages:
         logger.info("No packages found for query, returning empty response")
+
         async def empty_generator():
             yield "event: done\ndata: [DONE]\n\n"
+
         return StreamingResponse(
             empty_generator(),
             media_type="text/event-stream",
@@ -111,7 +113,5 @@ async def search(request: Request, body: SearchRequest):
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache"
-        },
+        headers={"Cache-Control": "no-cache"},
     )

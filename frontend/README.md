@@ -1,20 +1,26 @@
 # npmatch — frontend
 
-Next.js 15 · TypeScript · HeroUI · Tailwind CSS · Vercel
+Frontend for [npmatch](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+
+Next.js 15 · TypeScript · HeroUI · Tailwind CSS
 
 ## Setup
 
 ```bash
+git clone https://github.com/kodingkin/npmatch
 cd frontend
+
 npm install
 cp .env.local.example .env.local
+
 npm run dev
 ```
 
 ## Environment variables
 
+Create a `.env` file in `frontend/`:
+
 ```
-# .env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
@@ -22,10 +28,14 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ```
 src/
+  api/
+    search/
+      route.ts        # Route for the LLM search
+      health/
+        route.ts      # Route for health check on the backend API
   app/
-    layout.tsx        # HeroUI Provider, Google Fonts
+    layout.tsx
     page.tsx          # Main page — assembles all components
-    providers.tsx     # HeroUIProvider wrapper ("use client")
     globals.css       # Tailwind base + custom animations/prose
   components/
     SearchForm.tsx    # Textarea, framework selector, priority chips, submit
@@ -34,6 +44,7 @@ src/
     StatusStates.tsx  # EmptyState + ErrorState
   hooks/
     useSearch.ts      # All SSE streaming logic, search state machine
+    useHealthCheck.ts # Health check Pooling on python backend
   types/
     index.ts          # Shared types, constants
 ```
@@ -55,14 +66,3 @@ src/
 The hook uses `fetch` + `ReadableStream` reader directly.
 
 Chunk batching: SSE chunks from the backend may arrive batched in a single `read()`.
-The hook always splits on `\n` and processes line by line to handle this correctly.
-
-## Design
-
-- Dark theme via HeroUI's built-in dark mode (`<html className="dark">`)
-- npm red (`#CB3837`) as accent — used on focus rings, primary button, links, spinners
-- JetBrains Mono for all code/mono elements, DM Sans for prose
-- Subtle dot-grid background for depth
-- Skeleton shimmer animation while waiting for `event: packages`
-- Blinking cursor while LLM is streaming
-- `fade-in-up` keyframe animation on cards and panels as they appear
