@@ -1,16 +1,40 @@
 services:
-  backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
-    env_file: ./backend/.env
-
   frontend:
     build: ./frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - API_URL=http://backend:8000
+    ports: ["3000:3000"]
+    env_file:
+      - ./backend/.env
     depends_on:
-      - backend
-      
+      backend:
+        condition: service_healthy
+        
+
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    env_file:
+      - ./backend/.env
+    depends_on: [qdrant, postgres]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  qdrant:
+    image: qdrant/qdrant
+    ports: ["6333:6333"]
+    volumes: [qdrant_data:/qdrant/storage]
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_DB: npmatch
+      POSTGRES_USER: npmatch
+      POSTGRES_PASSWORD: npmatch
+    volumes: [pg_data:/var/lib/postgresql/data]
+
+volumes:
+  qdrant_data:
+  pg_data:

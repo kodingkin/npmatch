@@ -2,18 +2,16 @@ import os
 import json
 import logging
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+import app.env
 from app.models import SearchRequest
 from app.search import embed_query, vector_search
 from app.llm import stream_response
-
-load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
