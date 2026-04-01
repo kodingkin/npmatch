@@ -14,6 +14,7 @@ COLLECTION_NAME = "npmatch"
 
 _pg_pool: asyncpg.Pool | None = None
 
+
 async def _get_pool() -> asyncpg.Pool:
     global _pg_pool
     if _pg_pool is None:
@@ -61,13 +62,15 @@ async def vector_search(embedding: list[float], top_k: int = 5) -> list[dict]:
         meta = meta_by_name.get(name)
         if not meta:
             continue
-        packages.append({
-            "name": name,
-            "description": meta["description"] or "",
-            "version": meta["version"] or "",
-            "keywords": meta["keywords"] or "",
-            "npm_url": f"https://www.npmjs.com/package/{name}",
-            "score": hit.score,
-        })
+        packages.append(
+            {
+                "name": name,
+                "description": meta["description"] or "",
+                "version": meta["version"] or "",
+                "keywords": meta["keywords"] or "",
+                "npm_url": f"https://www.npmjs.com/package/{name}",
+                "score": hit.score,
+            }
+        )
 
     return packages
