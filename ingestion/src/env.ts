@@ -19,5 +19,11 @@ export const config = {
   openaiApiKey: process.env.OPENAI_API_KEY,
   openaiEmbeddingModel: process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-small",
   pineconeApiKey: process.env.PINECONE_API_KEY,
-  pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? "npmatch"
+  pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? "npmatch",
+  databaseUrl: process.env.DATABASE_URL,
+  qdrantUrl: process.env.QDRANT_URL
 } as const;
+
+if (!config.databaseUrl || !config.databaseUrl || !config.databaseUrl || !config.databaseUrl) {
+  throw new Error("Something missing in config");
+}

@@ -21,16 +21,17 @@ Browser
 Next.js API Route (/api/search)   ← proxy layer, hides backend URL + secrets
   ↓
 FastAPI backend
-  ↓  ↓
-Pinecone          OpenAI
-(vector search)   (gpt-4o streaming)
+  ↓       ↓          ↓
+Qdrant  Postgres   OpenAI
+(vec)   (metadata) (gpt-4o)
 ```
 
 **RAG pipeline:**
 1. User query is embedded via `text-embedding-3-small`
-2. Vector search returns top 6 semantically similar packages
-3. Retrieved packages + query are passed to GPT-4o as context
-4. LLM synthesizes a recommendation — streamed back to the browser via SSE
+2. Qdrant returns top 6 semantically similar package names
+3. Postgres is joined for full metadata (description, keywords, version)
+4. Retrieved packages + query are passed to GPT-4o as context
+5. LLM synthesizes a recommendation — streamed back to the browser via SSE
 
 The LLM never guesses from training memory. It only reasons over the retrieved packages, keeping recommendations verifiable and current.
 
@@ -42,7 +43,8 @@ The LLM never guesses from training memory. It only reasons over the retrieved p
 | Backend | FastAPI, Python 3.13, uv |
 | LLM | OpenAI GPT-4o (streaming) |
 | Embeddings | OpenAI text-embedding-3-small |
-| Vector DB | Pinecone |
+| Vector DB | Qdrant |
+| Metadata DB | Postgres (asyncpg) |
 | Ingestion | Node.js, TypeScript |
 | Infra | AWS ECS Fargate, ECR, ALB, Terraform, VPS, Docker |
 | CI/CD | GitHub Actions |
@@ -67,7 +69,6 @@ npmatch/
 │   │   ├── search.py           # embed query + vector search
 │   │   ├── llm.py              # GPT-4o streaming + prompt construction
 │   │   └── models.py           # Pydantic request/ response models
-│   ├── Makefile
 │   └── Dockerfile
 │
 ├── frontend/                   # Next.js
@@ -133,7 +134,7 @@ npm's search API is capped at 250 results — not enough for meaningful semantic
 1. **Fetch** — downloads the top 10000 most popular npm packages from [npm-rank](https://github.com/tristan-f-r/npm-rank) as a JSON file
 2. **Clean** — filters out packages missing a name or description, deduplicates by package name, and strips irrelevant fields (author, sponsors, maintainers)
 3. **Embed** — formats each package as `"{name}: {description}. keywords: {keywords}"` and batch-embeds via OpenAI `text-embedding-3-small` (batches of 100)
-4. **Upsert** — pushes vectors + metadata (name, description, keywords, version) into Pinecone. Idempotent — safe to re-run, existing vectors are overwritten not duplicated
+4. **Upsert** — pushes vectors into Qdrant (payload: `name` only) and metadata (name, description, keywords, version) into Postgres. Idempotent — safe to re-run, Qdrant upserts overwrite by deterministic UUID, Postgres upserts use `ON CONFLICT (name) DO UPDATE`
 
 ## ☁️ Infrastructure
 
@@ -162,7 +163,7 @@ VPC
 
 ## 🚀 Running locally
 
-**Prerequisites:** Docker, Node.js 20+, Python 3.13+, OpenAI API key, Pinecone API key
+**Prerequisites:** Docker, Node.js 20+, Python 3.13+, OpenAI API key
 
 ### Full stack with Docker Compose
 
@@ -173,29 +174,16 @@ cd npmatch
 
 # add environment variables
 cp backend/.env.example backend/.env
-# fill in OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_INDEX_NAME
+# fill in OPENAI_API_KEY
+
+cp frontend/.env.example frontend/.env
 
 # start backend + frontend
-docker compose up
+docker compose -f 'docker-compose.yml' up -d --build 
 ```
 
 Frontend: `http://localhost:3000`
 Backend: `http://localhost:8000`
-
-### Backend only
-
-```bash
-cd backend
-make dev
-```
-
-### Frontend only
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
 
 ## 🌱 Ingestion (seed the vector DB)
 
@@ -204,26 +192,9 @@ cd ingestion
 npm install
 
 cp .env.example .env
-# fill in OPENAI_API_KEY and PINECONE_API_KEY
+# fill in OPENAI_API_KEY
 
 tsx src/index.ts
-```
-
-## 🔑 Environment variables
-
-### Backend (`backend/.env`)
-
-```
-OPENAI_API_KEY=
-PINECONE_API_KEY=
-PINECONE_INDEX_NAME=npmatch-packages
-ALLOWED_ORIGINS=http://localhost:3000,https://npmatch.vercel.app
-```
-
-### Frontend (`frontend/.env.local`)
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ## 🎯 Design decisions
@@ -237,8 +208,8 @@ Streaming is one-directional (server → client). SSE is simpler, stateless, and
 **Why Next.js API route as proxy?**
 Keeps the backend URL off the client entirely. The browser never talks to FastAPI directly.
 
-**Why Pinecone over pgvector?**
-Zero infrastructure overhead for a portfolio project. Production at scale would evaluate pgvector on RDS to reduce cost and vendor dependency.
+**Why Qdrant + Postgres over Pinecone?**
+Pinecone bundles vectors and metadata together in a single managed service — simple, but not how production systems are typically designed. Splitting vector search (Qdrant) from structured metadata (Postgres) reflects real-world architecture patterns and keeps each store doing what it's good at. Qdrant runs as a Docker image across local, VPS, and EKS. Postgres is Neon on VPS and RDS on AWS.
 
 **Why `text-embedding-3-small`?**
 Good balance of semantic quality and cost at 5k vectors. Upgrade path to `text-embedding-3-large` is a one-line change.
@@ -248,7 +219,7 @@ Good balance of semantic quality and cost at 5k vectors. Upgrade path to `text-e
 - Ingestion is a point-in-time snapshot — very new packages may not appear until the next weekly refresh
 - No re-ranking step — production would add a cross-encoder re-ranker to improve retrieval precision
 - No evaluation pipeline — answer faithfulness and retrieval quality are not measured automatically
-- Rate limited to 6 requests/minute per IP
+- Rate limited to 2 requests/minute per IP
 
 ## 👤 Author
 

@@ -2,7 +2,7 @@
 
 FastAPI backend for [npmatch](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 
-Receives a user query, retrieves relevant packages via Pinecone vector search, and streams an LLM-synthesized recommendation back to the frontend via SSE.
+Receives a user query, retrieves relevant packages via Qdrant vector search, and streams an LLM-synthesized recommendation back to the frontend via SSE.
 
 ---
 
@@ -13,7 +13,8 @@ Receives a user query, retrieves relevant packages via Pinecone vector search, a
 | Framework | FastAPI |
 | LLM | OpenAI gpt-4o (streaming) |
 | Embeddings | OpenAI text-embedding-3-small |
-| Vector DB | Pinecone (serverless, cosine) |
+| Vector DB | Qdrant (self-hosted, cosine) |
+| Metadata DB | Postgres (asyncpg) |
 | Infra | AWS ECS Fargate + ECR + ALB |
 
 ---
@@ -35,31 +36,21 @@ uv venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 uv sync
 
-uv run uvicorn app.main:app --reload --port 8000
+cp .env.example .env
+# fill in OPENAI_API_KEY
+
+make dev
 ```
 
 API will be available at `http://localhost:8000`.
 
 Health check: `GET http://localhost:8000/health`
 
-### Environment variables
-
-Create a `.env` file in `backend/`:
-
-```
-OPENAI_API_KEY=sk-...
-PINECONE_API_KEY=...
-PINECONE_INDEX_NAME=npmatch
-ALLOWED_ORIGINS=http://localhost:3000,https://npmatch.vercel.app
-```
-
----
-
 ## API
 
 ### `POST /api/search`
 
-Embeds the query, retrieves top 6 matching packages from Pinecone, and streams an LLM recommendation back as SSE.
+Embeds the query, retrieves top 6 matching packages from Qdrant, joins to Postgres for full metadata, and streams an LLM recommendation back as SSE.
 
 **Request**
 
@@ -104,8 +95,9 @@ Returns `{"status": "ok"}`. Used by ALB health checks.
 backend/
 ├── app/
 │   ├── __init__.py
+│   ├── env.py
 │   ├── main.py       # FastAPI app, CORS, routes
-│   ├── search.py     # Pinecone vector search + OpenAI embeddings
+│   ├── search.py     # Qdrant vector search + Postgres metadata join + OpenAI embeddings
 │   ├── llm.py        # Prompt builder + streaming GPT-4o
 │   └── models.py     # Pydantic request models
 ├── .env              
