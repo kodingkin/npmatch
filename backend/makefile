@@ -3,4 +3,10 @@ dev:
 
 test:
 	uv run pytest
+
+lint:
+	uv run ruff check app/
+
+bundle:
+	uv run python -c "import app.main"
 	
