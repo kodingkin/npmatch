@@ -3,12 +3,30 @@ from openai import AsyncOpenAI
 from qdrant_client import AsyncQdrantClient
 import asyncpg
 
-openai_client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
+def get_openai_client() -> AsyncOpenAI:
+    """Lazy initialization of OpenAI client."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        api_key = "test-key"
+    return AsyncOpenAI(api_key=api_key)
 
-qdrant_client = AsyncQdrantClient(
-    url=os.environ["QDRANT_URL"],
-    api_key=os.environ.get("QDRANT_API_KEY") or None,
-)
+_qdrant_client: AsyncQdrantClient | None = None
+
+
+def get_qdrant_client() -> AsyncQdrantClient:
+    """Lazy initialization of Qdrant client."""
+    global _qdrant_client
+
+    if _qdrant_client is None:
+        url = os.environ.get("QDRANT_URL", "http://localhost:6333")
+        api_key = os.environ.get("QDRANT_API_KEY") or None
+
+        _qdrant_client = AsyncQdrantClient(
+            url=url,
+            api_key=api_key,
+        )
+
+    return _qdrant_client
 
 COLLECTION_NAME = "npmatch"
 
@@ -27,6 +45,7 @@ async def _get_pool() -> asyncpg.Pool:
 
 
 async def embed_query(text: str) -> list[float]:
+    openai_client = get_openai_client()
     response = await openai_client.embeddings.create(
         model="text-embedding-3-small",
         input=text,
@@ -35,6 +54,7 @@ async def embed_query(text: str) -> list[float]:
 
 
 async def vector_search(embedding: list[float], top_k: int = 5) -> list[dict]:
+    qdrant_client = get_qdrant_client()
     response = await qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
         query=embedding,

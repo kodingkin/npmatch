@@ -16,6 +16,12 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
+## Test
+
+```bash
+npm test
+```
+
 ## Environment variables
 
 Create a `.env` file in `frontend/`:

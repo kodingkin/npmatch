@@ -46,6 +46,12 @@ API will be available at `http://localhost:8000`.
 
 Health check: `GET http://localhost:8000/health`
 
+### Test
+
+```bash
+make test
+```
+
 ## API
 
 ### `POST /api/search`
