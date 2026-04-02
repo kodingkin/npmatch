@@ -5,4 +5,7 @@ import tseslint from 'typescript-eslint';
 export default defineConfig(
   eslint.configs.recommended,
   tseslint.configs.recommended,
+  {
+    ignores: [".next/**", "node_modules/**", "*.setup.tsx"],
+  },
 );

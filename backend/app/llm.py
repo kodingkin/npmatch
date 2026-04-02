@@ -2,8 +2,12 @@ import os
 from typing import AsyncGenerator
 from openai import AsyncOpenAI
 
-openai_client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
-
+def get_openai_client() -> AsyncOpenAI:
+    """Lazy initialization of OpenAI client."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        api_key = "test-key"
+    return AsyncOpenAI(api_key=api_key)
 
 def build_prompt(
     query: str,
@@ -61,6 +65,8 @@ async def stream_response(
     priorities: list[str] | None = None,
 ) -> AsyncGenerator[str, None]:
     prompt = build_prompt(query, packages, framework, priorities)
+
+    openai_client = get_openai_client()
 
     stream = await openai_client.chat.completions.create(
         model="gpt-4o",
