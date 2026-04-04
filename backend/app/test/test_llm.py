@@ -18,13 +18,15 @@ class TestBuildPrompt:
     """Tests for the build_prompt function."""
 
     def test_build_prompt_basic(self):
-        packages = [{
-            "name": "lodash",
-            "version": "4.17.21",
-            "description": "A modern JavaScript utility library",
-            "keywords": ["modules", "stdlib", "util"],
-            "npm_url": "https://www.npmjs.com/package/lodash",
-        }]
+        packages = [
+            {
+                "name": "lodash",
+                "version": "4.17.21",
+                "description": "A modern JavaScript utility library",
+                "keywords": ["modules", "stdlib", "util"],
+                "npm_url": "https://www.npmjs.com/package/lodash",
+            }
+        ]
 
         result = build_prompt("I need a utility library", packages, None, None)
 
@@ -32,13 +34,15 @@ class TestBuildPrompt:
         assert "Do NOT suggest packages outside this list" in result
 
     def test_build_prompt_with_framework_and_priorities(self):
-        packages = [{
-            "name": "react-query",
-            "version": "5.0.0",
-            "description": "Hooks",
-            "keywords": ["react"],
-            "npm_url": "https://www.npmjs.com/package/react-query",
-        }]
+        packages = [
+            {
+                "name": "react-query",
+                "version": "5.0.0",
+                "description": "Hooks",
+                "keywords": ["react"],
+                "npm_url": "https://www.npmjs.com/package/react-query",
+            }
+        ]
 
         result = build_prompt(
             "data fetching",
@@ -52,8 +56,20 @@ class TestBuildPrompt:
 
     def test_build_prompt_multiple_packages(self):
         packages = [
-            {"name": "axios","version": "1","description": "http","keywords": [],"npm_url": "x"},
-            {"name": "ky","version": "1","description": "fetch","keywords": [],"npm_url": "y"},
+            {
+                "name": "axios",
+                "version": "1",
+                "description": "http",
+                "keywords": [],
+                "npm_url": "x",
+            },
+            {
+                "name": "ky",
+                "version": "1",
+                "description": "fetch",
+                "keywords": [],
+                "npm_url": "y",
+            },
         ]
 
         result = build_prompt("HTTP", packages, None, None)
@@ -63,7 +79,6 @@ class TestBuildPrompt:
 
 
 class TestStreamResponse:
-
     @pytest.mark.asyncio
     async def test_stream_response_yields_content(self):
         chunks = [
@@ -106,9 +121,17 @@ class TestStreamResponse:
 
             async for _ in stream_response(
                 "my query",
-                [{"name": "p","version": "1","description": "d","keywords": [],"npm_url": "u"}],
+                [
+                    {
+                        "name": "p",
+                        "version": "1",
+                        "description": "d",
+                        "keywords": [],
+                        "npm_url": "u",
+                    }
+                ],
                 framework="React",
-                priorities=["fast","small"],
+                priorities=["fast", "small"],
             ):
                 break
 
@@ -146,7 +169,15 @@ class TestStreamResponse:
 
                 async for _ in stream_response(
                     "test",
-                    [{"name": "x","version": "1","description": "d","keywords": [],"npm_url": "u"}],
+                    [
+                        {
+                            "name": "x",
+                            "version": "1",
+                            "description": "d",
+                            "keywords": [],
+                            "npm_url": "u",
+                        }
+                    ],
                     framework="Vue",
                     priorities=["test"],
                 ):

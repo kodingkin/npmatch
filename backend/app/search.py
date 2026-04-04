@@ -1,7 +1,9 @@
 import os
+import asyncio
 from openai import AsyncOpenAI
 from qdrant_client import AsyncQdrantClient
 import asyncpg
+
 
 def get_openai_client() -> AsyncOpenAI:
     """Lazy initialization of OpenAI client."""
@@ -9,6 +11,7 @@ def get_openai_client() -> AsyncOpenAI:
     if not api_key:
         api_key = "test-key"
     return AsyncOpenAI(api_key=api_key)
+
 
 _qdrant_client: AsyncQdrantClient | None = None
 
@@ -28,7 +31,9 @@ def get_qdrant_client() -> AsyncQdrantClient:
 
     return _qdrant_client
 
+
 COLLECTION_NAME = "npmatch"
+CANDIDATE_LIMIT = 20
 
 _pg_pool: asyncpg.Pool | None = None
 
@@ -44,7 +49,15 @@ async def _get_pool() -> asyncpg.Pool:
     return _pg_pool
 
 
-async def embed_query(text: str) -> list[float]:
+def _rrf(rankings: list[list[str]], k: int = 60) -> list[str]:
+    scores: dict[str, float] = {}
+    for ranking in rankings:
+        for rank, name in enumerate(ranking, start=1):
+            scores[name] = scores.get(name, 0) + 1 / (k + rank)
+    return sorted(scores, key=lambda n: scores[n], reverse=True)
+
+
+async def _embed_query(text: str) -> list[float]:
     openai_client = get_openai_client()
     response = await openai_client.embeddings.create(
         model="text-embedding-3-small",
@@ -53,12 +66,12 @@ async def embed_query(text: str) -> list[float]:
     return response.data[0].embedding
 
 
-async def vector_search(embedding: list[float], top_k: int = 5) -> list[dict]:
+async def _vector_search(embedding: list[float]) -> list[str]:
     qdrant_client = get_qdrant_client()
     response = await qdrant_client.query_points(
         collection_name=COLLECTION_NAME,
         query=embedding,
-        limit=top_k,
+        limit=CANDIDATE_LIMIT,
         with_payload=True,
     )
 
@@ -67,18 +80,74 @@ async def vector_search(embedding: list[float], top_k: int = 5) -> list[dict]:
     if not results:
         return []
 
-    names = [hit.payload["name"] for hit in results]
+    return [hit.payload["name"] for hit in results]
 
+
+async def _fts_search(query: str) -> list[str]:
+    pool = await _get_pool()
+    rows = await pool.fetch(
+        """
+        SELECT name, ts_rank(
+          to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(keywords, '')),
+          plainto_tsquery('english', $1)
+        ) AS rank
+        FROM packages
+        WHERE to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(keywords, ''))
+              @@ plainto_tsquery('english', $1)
+        ORDER BY rank DESC
+        LIMIT $2
+        """,
+        query,
+        CANDIDATE_LIMIT,
+    )
+    return [row["name"] for row in rows]
+
+
+def _rrf(rankings: list[list[str]], k: int = 60) -> list[str]:
+    scores: dict[str, float] = {}
+    for ranking in rankings:
+        for rank, name in enumerate(ranking, start=1):
+            scores[name] = scores.get(name, 0) + 1 / (k + rank)
+    return sorted(scores, key=lambda n: scores[n], reverse=True)
+
+
+async def _fetch_metadata(names: list[str]) -> list[dict]:
     pool = await _get_pool()
     rows = await pool.fetch(
         "SELECT name, description, keywords, version FROM packages WHERE name = ANY($1)",
         names,
     )
+    return [dict(row) for row in rows]
+
+
+async def package_search(query: str, top_k: int = 6) -> list[dict]:
+    """
+    Hybrid search entry point — the only export.
+
+    1. Embeds query + runs Qdrant vector search (dense)
+    2. Runs Postgres FTS keyword search (sparse)
+       Both run concurrently via asyncio.gather.
+    3. Fuses ranked name lists with RRF
+    4. Fetches full metadata for top_k results in one Postgres query
+    """
+    embedding = await _embed_query(query)
+
+    vector_names, fts_names = await asyncio.gather(
+        _vector_search(embedding),
+        _fts_search(query),
+    )
+
+    fused_names = _rrf([vector_names, fts_names])
+    top_names = fused_names[:top_k]
+
+    if not top_names:
+        return []
+
+    rows = await _fetch_metadata(top_names)
     meta_by_name = {row["name"]: row for row in rows}
 
     packages = []
-    for hit in results:
-        name = hit.payload["name"]
+    for name in top_names:
         meta = meta_by_name.get(name)
         if not meta:
             continue
@@ -89,7 +158,6 @@ async def vector_search(embedding: list[float], top_k: int = 5) -> list[dict]:
                 "version": meta["version"] or "",
                 "keywords": meta["keywords"] or "",
                 "npm_url": f"https://www.npmjs.com/package/{name}",
-                "score": hit.score,
             }
         )
 

@@ -7,6 +7,9 @@ test:
 lint:
 	uv run ruff check app/
 
+lint_fix:
+	uv run ruff check app/ --fix && uv run ruff format app/
+
 bundle:
 	uv run python -c "import app.main"
 	

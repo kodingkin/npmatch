@@ -10,7 +10,7 @@ from slowapi.util import get_remote_address
 
 import app.env
 from app.models import SearchRequest
-from app.search import embed_query, vector_search
+from app.search import package_search
 from app.llm import stream_response
 
 logging.basicConfig(level=logging.INFO)
@@ -56,16 +56,10 @@ async def search(request: Request, body: SearchRequest):
     )
 
     try:
-        embedding = await embed_query(body.query)
+        packages = await package_search(body.query)
     except Exception as e:
-        logger.error(f"Embedding failed: {e}")
-        raise HTTPException(status_code=502, detail="Failed to embed query")
-
-    try:
-        packages = await vector_search(embedding)
-    except Exception as e:
-        logger.error(f"Vector search failed: {e}")
-        raise HTTPException(status_code=502, detail="Failed to query vector database")
+        logger.error(f"Package search failed: {e}")
+        raise HTTPException(status_code=502, detail="Failed in hybrid search")
 
     if not packages:
         logger.info("No packages found for query, returning empty response")
