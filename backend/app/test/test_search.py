@@ -39,9 +39,10 @@ async def test_vector_search_basic():
     mock_pool = MagicMock()
     mock_pool.fetch = AsyncMock(return_value=[row])
 
-    with patch("app.search.get_qdrant_client", return_value=qdrant), \
-         patch("app.search._get_pool", AsyncMock(return_value=mock_pool)):
-
+    with (
+        patch("app.search.get_qdrant_client", return_value=qdrant),
+        patch("app.search._get_pool", AsyncMock(return_value=mock_pool)),
+    ):
         result = await vector_search([0.1, 0.2])
 
     assert len(result) == 1
@@ -73,10 +74,10 @@ async def test_vector_search_skips_missing_metadata():
     mock_pool = MagicMock()
     mock_pool.fetch = AsyncMock(return_value=[])
 
-    with patch("app.search.get_qdrant_client", return_value=qdrant), \
-         patch("app.search._get_pool", AsyncMock(return_value=mock_pool)):
-
+    with (
+        patch("app.search.get_qdrant_client", return_value=qdrant),
+        patch("app.search._get_pool", AsyncMock(return_value=mock_pool)),
+    ):
         result = await vector_search([0.1])
 
     assert result == []
-    

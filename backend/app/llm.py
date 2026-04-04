@@ -2,12 +2,14 @@ import os
 from typing import AsyncGenerator
 from openai import AsyncOpenAI
 
+
 def get_openai_client() -> AsyncOpenAI:
     """Lazy initialization of OpenAI client."""
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         api_key = "test-key"
     return AsyncOpenAI(api_key=api_key)
+
 
 def build_prompt(
     query: str,

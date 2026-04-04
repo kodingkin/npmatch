@@ -5,7 +5,6 @@ from app.models import SearchRequest, Package, SearchResponse
 
 
 class TestSearchRequest:
-
     def test_valid_request(self):
         req = SearchRequest(
             query="react table library",
@@ -31,7 +30,6 @@ class TestSearchRequest:
 
 
 class TestPackage:
-
     def test_valid_package(self):
         pkg = Package(
             name="axios",
@@ -45,7 +43,6 @@ class TestPackage:
 
 
 class TestSearchResponse:
-
     def test_response_with_packages(self):
         pkg = Package(
             name="axios",
