@@ -57,7 +57,8 @@ Instructions:
 - Format your response in Markdown with proper blank lines between sections.
 - Use bullet points (`-`) for each package recommendation.
 - Start each package with `### package-name` as a header.
-- Leave a blank line between each package block."""
+- Leave a blank line between each package block.
+- If the request is ambiguous or missing key details, state that there is not enough information to make a reliable recommendation."""
 
 
 async def stream_response(

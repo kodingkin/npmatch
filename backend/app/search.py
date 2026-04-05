@@ -123,17 +123,23 @@ async def _fetch_metadata(names: list[str]) -> list[dict]:
 async def package_search(query: str, top_k: int = 6) -> list[dict]:
     """
     Hybrid search entry point — the only export.
-
-    1. Embeds query + runs Qdrant vector search (dense)
-    2. Runs Postgres FTS keyword search (sparse)
-       Both run concurrently via asyncio.gather.
-    3. Fuses ranked name lists with RRF
-    4. Fetches full metadata for top_k results in one Postgres query
+ 
+    FTS runs concurrently with embedding + vector search since it only needs
+    the raw query text. This hides the OpenAI embedding latency behind the
+    Postgres query.
+ 
+    1. Concurrently:
+       - embed query → Qdrant vector search  (dense)
+       - Postgres FTS keyword search          (sparse)
+    2. Fuse both ranked name lists with RRF
+    3. Fetch full metadata for top_k results in one Postgres query
     """
-    embedding = await _embed_query(query)
-
+    async def _dense(q: str) -> list[str]:
+        embedding = await _embed_query(q)
+        return await _vector_search(embedding)
+ 
     vector_names, fts_names = await asyncio.gather(
-        _vector_search(embedding),
+        _dense(query),
         _fts_search(query),
     )
 

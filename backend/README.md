@@ -1,8 +1,8 @@
 # npmatch — backend
 
-FastAPI backend for [npmatch](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
+FastAPI backend for [npmatch](https://npmatch).
 
-Receives a user query, retrieves relevant packages via Qdrant vector search, and streams an LLM-synthesized recommendation back to the frontend via SSE.
+Receives a user query, runs hybrid search (Qdrant vector search + Postgres full-text search) fused with RRF, and streams an LLM-synthesized recommendation back to the frontend via SSE.
 
 ---
 
@@ -15,7 +15,36 @@ Receives a user query, retrieves relevant packages via Qdrant vector search, and
 | Embeddings | OpenAI text-embedding-3-small |
 | Vector DB | Qdrant (self-hosted, cosine) |
 | Metadata DB | Postgres (asyncpg) |
-| Infra | AWS ECS Fargate + ECR + ALB |
+| Infra | AWS EKS + ECR + ALB |
+
+---
+
+## How search works
+
+Hybrid search over ~5k npm packages, fused with Reciprocal Rank Fusion (RRF).
+
+```
+User query
+    ↓
+┌─────────────────────────┬──────────────────────────┐
+│ embed → Qdrant search   │  Postgres FTS             │
+│ (dense / semantic)      │  (sparse / keyword)       │
+│ top 20 by cosine sim    │  top 20 by ts_rank        │
+└─────────────────────────┴──────────────────────────┘
+    both run concurrently via asyncio.gather
+    ↓
+RRF fusion → top 5 names
+    ↓
+Postgres metadata fetch (single query)
+    ↓
+GPT-4o recommendation — streamed via SSE
+```
+
+**Dense search** (Qdrant) — finds semantically similar packages even with no keyword overlap. "render rich text" matches packages described as markdown renderers.
+
+**Sparse search** (Postgres FTS) — finds packages that literally contain the query terms. Uses `to_tsvector` + `plainto_tsquery` with English stemming. Computed at query time — no migration needed at current scale.
+
+**RRF** — packages appearing in both lists rank highest. Formula: `score = Σ 1 / (60 + rank)` per list. k=60 is the standard constant.
 
 ---
 
@@ -25,6 +54,8 @@ Receives a user query, retrieves relevant packages via Qdrant vector search, and
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- Qdrant running locally (Docker)
+- Postgres running locally (Docker)
 
 ### Setup
 
@@ -35,7 +66,6 @@ cd npmatch/backend
 uv venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 uv sync
-
 cp .env.example .env
 # fill in OPENAI_API_KEY
 
@@ -46,17 +76,12 @@ API will be available at `http://localhost:8000`.
 
 Health check: `GET http://localhost:8000/health`
 
-### Test
-
-```bash
-make test
-```
 
 ## API
 
 ### `POST /api/search`
 
-Embeds the query, retrieves top 6 matching packages from Qdrant, joins to Postgres for full metadata, and streams an LLM recommendation back as SSE.
+Embeds the query, retrieves the top 20 matching packages from Qdrant and Postgres, combines the results using RRF, reduces the list to the top six, fetches full metadata from Postgres, and streams an LLM recommendation back via SSE.
 
 **Request**
 
@@ -72,6 +97,9 @@ Embeds the query, retrieves top 6 matching packages from Qdrant, joins to Postgr
 
 **Response** — `text/event-stream`
 
+Always `200`. Three possible shapes:
+
+**Results found:**
 ```
 event: packages
 data: [{"name":"react-markdown","version":"9.0.1","description":"...","npm_url":"..."}]
@@ -84,10 +112,20 @@ event: done
 data: [DONE]
 ```
 
-Two event types:
-- `event: packages` — fires first with structured package data (for rendering cards in the UI)
-- `data:` — LLM text chunks, streamed as they arrive
-- `event: done` — signals end of stream
+**No results:**
+```
+event: done
+data: [DONE]
+```
+
+**Stream error:**
+```
+event: error
+data: LLM streaming failed
+
+event: done
+data: [DONE]
+```
 
 ### `GET /health`
 
@@ -103,15 +141,15 @@ backend/
 │   ├── __init__.py
 │   ├── env.py
 │   ├── main.py       # FastAPI app, CORS, routes
-│   ├── search.py     # Qdrant vector search + Postgres metadata join + OpenAI embeddings
+│   ├── search.py     # Hybrid search: Qdrant + Postgres FTS + RRF
 │   ├── llm.py        # Prompt builder + streaming GPT-4o
 │   └── models.py     # Pydantic request models
-├── .env              
+├── .env
 ├── .gitignore
 ├── .dockerignore
 ├── Dockerfile
-├── pyproject.toml    
-└── uv.lock           
+├── pyproject.toml
+└── uv.lock
 ```
 
 ---
@@ -146,4 +184,4 @@ Deployed on AWS ECS Fargate behind an Application Load Balancer.
 
 On merge to `main`, GitHub Actions builds a Docker image, pushes to ECR, and triggers an ECS deployment. ALB handles SSL termination.
 
-See `infra/` for Terraform config and `.github/workflows/` for CI/CD.
+See `infra/terraform/` for Terraform config and `.github/workflows/` for CI/CD.
