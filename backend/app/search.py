@@ -22,7 +22,7 @@ def get_qdrant_client() -> AsyncQdrantClient:
 
     if _qdrant_client is None:
         url = os.environ.get("QDRANT_URL", "http://localhost:6333")
-        api_key = os.environ.get("QDRANT_API_KEY") or None
+        api_key = os.environ.get("QDRANT_CLOUD_API_KEY") or None
 
         _qdrant_client = AsyncQdrantClient(
             url=url,
@@ -42,7 +42,7 @@ async def _get_pool() -> asyncpg.Pool:
     global _pg_pool
     if _pg_pool is None:
         _pg_pool = await asyncpg.create_pool(
-            dsn=os.environ["DATABASE_URL"],
+            dsn=os.environ["DATABASE_CONNECTION_STRING"],
             min_size=1,
             max_size=5,
         )

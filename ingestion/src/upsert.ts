@@ -9,10 +9,11 @@ const BATCH_SIZE = 100;
 
 const qdrant = new QdrantClient({
   url: config.qdrantUrl,
+  apiKey: config.qdrantApiKey
 });
 
 const pool = new pg.Pool({
-  connectionString: config.databaseUrl,
+  connectionString: config.connectionString,
 });
 
 async function ensureQdrantCollection(): Promise<void> {
