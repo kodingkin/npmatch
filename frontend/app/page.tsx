@@ -53,7 +53,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-12 flex flex-col gap-8">
+      <div className="max-w-4xl mx-auto px-4 py-12 flex flex-col gap-8 min-h-[97vh]">
         {/* Hero section */}
         <div className="flex flex-col gap-2">
           <h1 className="font-mono font-semibold text-2xl tracking-tight text-white/90">
@@ -132,25 +132,24 @@ export default function Home() {
           </div>
         )}
 
-        {/* Done — subtle footer note */}
-        {isDone && (
-          <>
+        <div className="mt-auto">
+          <p className="text-[11px] font-mono text-white/60 text-center">
+            <Link
+              href="https://github.com/kodingkin/npmatch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/30 hover:text-white/80 transition-colors no-underline"
+            >
+              Github
+              <Link.Icon />
+            </Link>
+          </p>
+          {isDone && (
             <p className="text-[11px] font-mono text-white/20 text-center">
-              Showing top 6 results · Vector similarity search via Pinecone
+              Showing top 6 results · Vector similarity search via Qdrant
             </p>
-            <p className="text-[11px] font-mono text-white/20 text-center">
-              <Link
-                href="https://github.com/kodingkin/npmatch"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/30 hover:text-white/60 transition-colors no-underline"
-              >
-                Github
-                <Link.Icon />
-              </Link>
-            </p>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </main>
   );
