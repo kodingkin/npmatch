@@ -2,7 +2,7 @@
 
 > Find the right npm package — describe what you need, get AI-powered recommendations grounded in real registry data.
 
-**[Live Demo](https://npmatch.vercel.app)** · **[Backend API](https://api.npmatch.dev/health)**
+**[Live Demo](https://npmatch-czy7.vercel.app)** · **[Backend API](https://api.npmatch.dev/health)**
 
 ## ✨ What it does
 

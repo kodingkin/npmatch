@@ -1,42 +1,15 @@
 version: '3.8'
 
 services:
-  frontend:
-    image: kin527/npmatch-frontend:latest
-    env_file:
-      - ./.env
-    expose:
-      - "3000"
-    networks:
-      - app-net
-
   backend:
     image: kin527/npmatch-backend:latest
     env_file:
       - ./.env
-    expose:
-      - "8000"
-    networks:
-      - app-net
-
-  caddy:
-    image: caddy:2-alpine
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
+      - "8000:8000"
     networks:
       - app-net
-    depends_on:
-      - frontend
 
 networks:
   app-net:
     driver: bridge
-
-volumes:
-  caddy_data:
-  caddy_config:
