@@ -21,8 +21,8 @@ Script that populates vector indexes with npm package data.
 | Step | Model | Est. cost per run |
 |---|---|---|
 | Embed 5,100 packages | `text-embedding-3-small` | ~$0.001 |
-| Qdrant upsert | Self-hosted / Qdrant Cloud free tier | $0 |
-| Postgres insert | Neon / Supabase free tier (local or VPS) | $0 |
+| Qdrant upsert | Qdrant Cloud free tier | $0 |
+| Postgres insert | Supabase free tier (local or VPS) | $0 |
 
 ### Running Locally
 ```bash
