@@ -31,15 +31,16 @@ app.state.limiter = limiter
 
 allowed_origins = os.environ.get(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,https://npmatch.vercel.app",
+    "http://localhost:3000,http://frontend:3000,https://npmatch.vercel.app",
 ).split(",")
+allow_headers = ["Content-Type"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["OPTIONS", "GET", "POST"],
+    allow_headers=allow_headers,
 )
 
 
