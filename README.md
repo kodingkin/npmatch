@@ -2,7 +2,7 @@
 
 > Find the right npm package — describe what you need, get AI-powered recommendations grounded in real registry data.
 
-**[Live Demo](https://npmatch.vercel.app)** · **[Backend API](https://api.npmatch.dev/health)**
+**[Live Demo](https://npmatch.vercel.app/)** · **[Backend API](https://npmatch-backend.vercel.app/redoc)**
 
 ## ✨ What it does
 
@@ -46,7 +46,7 @@ The LLM never guesses from training memory. It only reasons over the retrieved p
 | Vector DB | Qdrant |
 | Metadata DB | Postgres (asyncpg) |
 | Ingestion | Node.js, TypeScript |
-| Infra | AWS ECS Fargate, ECR, ALB, Terraform, VPS, Docker |
+| Infra | AWS ECS Fargate, ECR, ALB, Terraform, Vercel, Supabase, Qdrant Cloud, Docker |
 | CI/CD | GitHub Actions |
 
 ## 📁 Project structure
@@ -68,7 +68,7 @@ npmatch/
 │   │   ├── main.py             # routes, middleware, CORS, rate limiting
 │   │   ├── search.py           # embed query + vector search
 │   │   ├── llm.py              # GPT-4o streaming + prompt construction
-│   │   └── models.py           # Pydantic request/ response models
+│   │   └── models.py           # Pydantic request/response models
 │   └── Dockerfile
 │
 ├── frontend/                   # Next.js
@@ -76,9 +76,9 @@ npmatch/
 │   │   ├── page.tsx
 │   │   └── api/
 │   │       └── search/         # SSE proxy to backend
-│   │           ├── route.ts 
+│   │           ├── route.ts
 │   │           └── health/     # health check proxy
-│   │               └── route.ts 
+│   │               └── route.ts
 │   ├── components/
 │   │   ├── SearchForm.tsx
 │   │   ├── PackageCard.tsx
@@ -131,35 +131,47 @@ Returns backend status. Polled by frontend every 60s with animated signal indica
 
 npm's search API is capped at 250 results — not enough for meaningful semantic search. Instead:
 
-1. **Fetch** — downloads the top 10000 most popular npm packages from [npm-rank](https://github.com/tristan-f-r/npm-rank) as a JSON file
+1. **Fetch** — downloads the top 10,000 most popular npm packages from [npm-rank](https://github.com/tristan-f-r/npm-rank) as a JSON file
 2. **Clean** — filters out packages missing a name or description, deduplicates by package name, and strips irrelevant fields (author, sponsors, maintainers)
 3. **Embed** — formats each package as `"{name}: {description}. keywords: {keywords}"` and batch-embeds via OpenAI `text-embedding-3-small` (batches of 100)
 4. **Upsert** — pushes vectors into Qdrant (payload: `name` only) and metadata (name, description, keywords, version) into Postgres. Idempotent — safe to re-run, Qdrant upserts overwrite by deterministic UUID, Postgres upserts use `ON CONFLICT (name) DO UPDATE`
 
 ## ☁️ Infrastructure
 
-Managed with Terraform. All AWS resources are defined as code in `/infra`.
+### Live demo (always-on, zero cost)
 
 ```
-ECR (3 repos)
-  npmatch-ingestion
+Vercel          — Next.js frontend + FastAPI backend (serverless)
+Qdrant Cloud    — vector search (free tier)
+Supabase        — Postgres + pgvector (free tier)
+```
+
+The live demo runs entirely on free tiers — no ongoing infrastructure cost.
+
+> 🔧 A self-hosted VPS backend (Oracle Cloud Always Free) is planned as an alternative to Vercel's serverless backend.
+
+### AWS (portfolio showcase)
+
+Terraform configuration in `/infra` provisions a production-grade AWS deployment:
+
+```
+ECR
+  npmatch-frontend
   npmatch-backend
-  npmatch-frontend (not used — frontend on Vercel)
+  npmatch-ingestion
 
 ECS Fargate
-  backend service (always-on, behind ALB)
-  ingestion scheduled task (weekly via EventBridge)
+  frontend service — behind ALB
+  backend service — behind ALB with HTTPS termination
+  qdrant service — internal, EFS for persistent storage
+  ingestion scheduled task — weekly via EventBridge
 
 ALB
   HTTPS termination
-  rate limiting in production
-
-VPC
-  public + private subnets
-  security groups
+  public + private subnets, security groups
 ```
 
-> 💡 The live demo runs on VPS. To spin up a full AWS deployment yourself: `terraform apply` in `/infra`. To tear it down: `terraform destroy`.
+> 💡 To spin up the full AWS deployment: `terraform apply` in `/infra`. To tear it down: `terraform destroy`.
 
 ## 🚀 Running locally
 
@@ -178,8 +190,8 @@ cp backend/.env.example backend/.env
 
 cp frontend/.env.example frontend/.env
 
-# start backend + frontend
-docker compose -f 'docker-compose.yml' up -d --build 
+# start all services (frontend, backend, Qdrant, Postgres)
+docker compose -f docker-compose.yml up -d --build
 ```
 
 Frontend: `http://localhost:3000`
@@ -200,7 +212,7 @@ tsx src/index.ts
 ## 🎯 Design decisions
 
 **Why RAG instead of asking GPT-4o directly?**
-LLMs hallucinate package names and versions. By retrieving real packages from Vector Database first and passing them as context, the LLM only reasons over verified data — recommendations are grounded and verifiable.
+LLMs hallucinate package names and versions. By retrieving real packages from the vector database first and passing them as context, the LLM only reasons over verified data — recommendations are grounded and verifiable.
 
 **Why SSE over WebSockets?**
 Streaming is one-directional (server → client). SSE is simpler, stateless, and works over standard HTTP — no connection management overhead.
@@ -208,11 +220,11 @@ Streaming is one-directional (server → client). SSE is simpler, stateless, and
 **Why Next.js API route as proxy?**
 Keeps the backend URL off the client entirely. The browser never talks to FastAPI directly.
 
-**Why Qdrant + Postgres over Pinecone?**
-Pinecone bundles vectors and metadata together in a single managed service — simple, but not how production systems are typically designed. Splitting vector search (Qdrant) from structured metadata (Postgres) reflects real-world architecture patterns and keeps each store doing what it's good at. Qdrant runs as a Docker image across local, VPS, and EKS. Postgres is Neon on VPS and RDS on AWS.
+**Why Qdrant + Postgres over a single vector store?**
+Pinecone bundles vectors and metadata together — simple, but not how production systems are typically designed. Splitting vector search (Qdrant) from structured metadata (Postgres) reflects real-world architecture patterns and keeps each store doing what it does best. Postgres also enables hybrid search combining vector similarity with full-text search for improved retrieval quality.
 
 **Why `text-embedding-3-small`?**
-Good balance of semantic quality and cost at 5k vectors. Upgrade path to `text-embedding-3-large` is a one-line change.
+Good balance of semantic quality and cost at this scale. Upgrade path to `text-embedding-3-large` is a one-line change.
 
 ## 📋 Known limitations
 

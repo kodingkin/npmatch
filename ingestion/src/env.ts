@@ -18,12 +18,17 @@ export const config = {
   upsertBatchSize: getEnvNumber("UPSERT_BATCH_SIZE", 100),
   openaiApiKey: process.env.OPENAI_API_KEY,
   openaiEmbeddingModel: process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-small",
-  pineconeApiKey: process.env.PINECONE_API_KEY,
-  pineconeIndexName: process.env.PINECONE_INDEX_NAME ?? "npmatch",
-  databaseUrl: process.env.DATABASE_URL,
-  qdrantUrl: process.env.QDRANT_URL
+  connectionString: process.env.DATABASE_CONNECTION_STRING,
+  qdrantUrl: process.env.QDRANT_URL,
+  qdrantApiKey: process.env.QDRANT_CLOUD_API_KEY
 } as const;
 
-if (!config.databaseUrl || !config.databaseUrl || !config.databaseUrl || !config.databaseUrl) {
-  throw new Error("Something missing in config");
+if (!config.connectionString) {
+  throw new Error("connectionString missing in config");
+}
+if (!config.qdrantUrl) {
+  throw new Error("qdrantUrl missing in config");
+}
+if (!config.openaiApiKey) {
+  throw new Error("openaiApiKey missing in config");
 }

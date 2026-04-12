@@ -9,10 +9,11 @@ const BATCH_SIZE = 100;
 
 const qdrant = new QdrantClient({
   url: config.qdrantUrl,
+  apiKey: config.qdrantApiKey
 });
 
 const pool = new pg.Pool({
-  connectionString: config.databaseUrl,
+  connectionString: config.connectionString,
 });
 
 async function ensureQdrantCollection(): Promise<void> {
@@ -27,18 +28,6 @@ async function ensureQdrantCollection(): Promise<void> {
   }
 }
 
-async function ensurePgTable(): Promise<void> {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS packages (
-      name        TEXT PRIMARY KEY,
-      description TEXT,
-      keywords    TEXT,
-      version     TEXT
-    )
-  `);
-  console.log("Postgres table ready");
-}
-
 async function upsertToQdrant(batch: EmbeddedPackage[]): Promise<void> {
   const points = batch.map(({ pkg, vector }) => ({
     id: stringToUuid(pkg.name),
@@ -47,6 +36,32 @@ async function upsertToQdrant(batch: EmbeddedPackage[]): Promise<void> {
   }));
 
   await qdrant.upsert(COLLECTION_NAME, { points, wait: true });
+}
+
+async function ensurePgTable(): Promise<void> {
+  // await pool.query(`DROP TABLE IF EXISTS packages`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS packages (
+      name TEXT PRIMARY KEY,
+      description TEXT,
+      keywords TEXT,
+      version TEXT,
+
+      search_vector tsvector GENERATED ALWAYS AS (
+        setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
+        setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
+        setweight(to_tsvector('english', coalesce(keywords, '')), 'C')
+      ) STORED
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_packages_search_vector
+    ON packages USING GIN(search_vector)
+  `);
+
+  console.log("Postgres table ready");
 }
 
 async function upsertToPg(batch: EmbeddedPackage[]): Promise<void> {

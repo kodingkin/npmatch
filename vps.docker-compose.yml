@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  backend:
+    image: kin527/npmatch-backend:latest
+    env_file:
+      - ./.env
+    ports:
+      - "8000:8000"
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

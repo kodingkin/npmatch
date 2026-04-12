@@ -53,6 +53,7 @@ Instructions:
 - For each recommendation, briefly explain why it fits and any tradeoffs.
 - If priorities or framework filters were provided, factor them in.
 - If no package is a strong fit, say so honestly rather than forcing a recommendation.
+- If the request is ambiguous or missing key details, state that there is not enough information to make a reliable recommendation.
 - Keep your response concise and practical — this is for a developer who wants to ship, not read an essay.
 - Format your response in Markdown with proper blank lines between sections.
 - Use bullet points (`-`) for each package recommendation.

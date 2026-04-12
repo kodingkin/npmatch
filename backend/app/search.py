@@ -3,6 +3,10 @@ import asyncio
 from openai import AsyncOpenAI
 from qdrant_client import AsyncQdrantClient
 import asyncpg
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def get_openai_client() -> AsyncOpenAI:
@@ -22,7 +26,7 @@ def get_qdrant_client() -> AsyncQdrantClient:
 
     if _qdrant_client is None:
         url = os.environ.get("QDRANT_URL", "http://localhost:6333")
-        api_key = os.environ.get("QDRANT_API_KEY") or None
+        api_key = os.environ.get("QDRANT_CLOUD_API_KEY") or None
 
         _qdrant_client = AsyncQdrantClient(
             url=url,
@@ -42,7 +46,7 @@ async def _get_pool() -> asyncpg.Pool:
     global _pg_pool
     if _pg_pool is None:
         _pg_pool = await asyncpg.create_pool(
-            dsn=os.environ["DATABASE_URL"],
+            dsn=os.environ["DATABASE_CONNECTION_STRING"],
             min_size=1,
             max_size=5,
         )
@@ -87,14 +91,12 @@ async def _fts_search(query: str) -> list[str]:
     pool = await _get_pool()
     rows = await pool.fetch(
         """
-        SELECT name, ts_rank(
-          to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(keywords, '')),
-          plainto_tsquery('english', $1)
-        ) AS rank
-        FROM packages
-        WHERE to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(keywords, ''))
-              @@ plainto_tsquery('english', $1)
-        ORDER BY rank DESC
+        SELECT name,
+               ts_rank_cd(search_vector, q) AS rank
+        FROM packages,
+             websearch_to_tsquery('english', $1) AS q
+        WHERE search_vector @@ q
+        ORDER BY rank DESC, name ASC
         LIMIT $2
         """,
         query,
@@ -124,18 +126,28 @@ async def package_search(query: str, top_k: int = 6) -> list[dict]:
     """
     Hybrid search entry point — the only export.
 
-    1. Embeds query + runs Qdrant vector search (dense)
-    2. Runs Postgres FTS keyword search (sparse)
-       Both run concurrently via asyncio.gather.
-    3. Fuses ranked name lists with RRF
-    4. Fetches full metadata for top_k results in one Postgres query
+    FTS runs concurrently with embedding + vector search since it only needs
+    the raw query text. This hides the OpenAI embedding latency behind the
+    Postgres query.
+
+    1. Concurrently:
+       - embed query → Qdrant vector search  (dense)
+       - Postgres FTS keyword search          (sparse)
+    2. Fuse both ranked name lists with RRF
+    3. Fetch full metadata for top_k results in one Postgres query
     """
-    embedding = await _embed_query(query)
+
+    async def _dense(q: str) -> list[str]:
+        embedding = await _embed_query(q)
+        return await _vector_search(embedding)
 
     vector_names, fts_names = await asyncio.gather(
-        _vector_search(embedding),
+        _dense(query),
         _fts_search(query),
     )
+
+    logger.info(f"List from vector search: {vector_names}")
+    logger.info(f"List from fts search: {fts_names}")
 
     fused_names = _rrf([vector_names, fts_names])
     top_names = fused_names[:top_k]
