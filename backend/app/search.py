@@ -3,6 +3,10 @@ import asyncio
 from openai import AsyncOpenAI
 from qdrant_client import AsyncQdrantClient
 import asyncpg
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def get_openai_client() -> AsyncOpenAI:
@@ -87,14 +91,12 @@ async def _fts_search(query: str) -> list[str]:
     pool = await _get_pool()
     rows = await pool.fetch(
         """
-        SELECT name, ts_rank(
-          to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(keywords, '')),
-          plainto_tsquery('english', $1)
-        ) AS rank
-        FROM packages
-        WHERE to_tsvector('english', coalesce(name, '') || ' ' || coalesce(description, '') || ' ' || coalesce(keywords, ''))
-              @@ plainto_tsquery('english', $1)
-        ORDER BY rank DESC
+        SELECT name,
+               ts_rank_cd(search_vector, q) AS rank
+        FROM packages,
+             websearch_to_tsquery('english', $1) AS q
+        WHERE search_vector @@ q
+        ORDER BY rank DESC, name ASC
         LIMIT $2
         """,
         query,
@@ -123,25 +125,29 @@ async def _fetch_metadata(names: list[str]) -> list[dict]:
 async def package_search(query: str, top_k: int = 6) -> list[dict]:
     """
     Hybrid search entry point — the only export.
- 
+
     FTS runs concurrently with embedding + vector search since it only needs
     the raw query text. This hides the OpenAI embedding latency behind the
     Postgres query.
- 
+
     1. Concurrently:
        - embed query → Qdrant vector search  (dense)
        - Postgres FTS keyword search          (sparse)
     2. Fuse both ranked name lists with RRF
     3. Fetch full metadata for top_k results in one Postgres query
     """
+
     async def _dense(q: str) -> list[str]:
         embedding = await _embed_query(q)
         return await _vector_search(embedding)
- 
+
     vector_names, fts_names = await asyncio.gather(
         _dense(query),
         _fts_search(query),
     )
+
+    logger.info(f"List from vector search: {vector_names}")
+    logger.info(f"List from fts search: {fts_names}")
 
     fused_names = _rrf([vector_names, fts_names])
     top_names = fused_names[:top_k]

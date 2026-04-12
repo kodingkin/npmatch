@@ -25,6 +25,7 @@ async def test_vector_search_skips_missing_metadata():
 
     assert result == []
 
+
 @pytest.mark.asyncio
 async def test_hybrid_fusion_vector_and_fts():
     hit = MagicMock()
