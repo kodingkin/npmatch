@@ -1,0 +1,38 @@
+name: Ingestion
+
+on:
+  workflow_dispatch
+  
+jobs:
+  ingestion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    defaults:
+      run:
+        working-directory: ./ingestion
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ingestion/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ingestion
+        run: npm run ingestion
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DATABASE_CONNECTION_STRING: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_CLOUD_API_KEY: ${{ secrets.QDRANT_CLOUD_API_KEY }}
