@@ -22,7 +22,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
   rule {
     id     = "expire-logs"
     status = "Enabled"
-    expiration { days = 30 }
+    filter {
+      prefix = "alb/"
+    }
+    expiration {
+      days = 30
+    }
   }
 }
 

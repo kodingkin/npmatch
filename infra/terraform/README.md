@@ -111,16 +111,16 @@ terraform init
 ### 3. Apply
 
 ```bash
-# Stage 1 — ECR: images must exist before ECS services start
-terraform apply -target=module.ecr
+# Stage 1 — ECR: catch image repo creation issues early
+terraform apply -target=module.ecr -var-file="terraform.tfvars"
 
-# Push images via GitHub Actions push_image_to_ecr
+# Push images via GitHub Actions
 
-# Stage 2 — ECS: creates service_sg needed by RDS module
-terraform apply -target=module.ecs
+# Stage 2 — ECS: services depend on image repos existing
+terraform apply -target=module.ecs -var-file="terraform.tfvars"
 
 # Stage 3 — everything else
-terraform apply
+terraform apply -var-file="terraform.tfvars"
 ```
 
 ### 4. Post-apply

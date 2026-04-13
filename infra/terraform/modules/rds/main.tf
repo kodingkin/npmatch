@@ -51,6 +51,7 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   backup_retention_period = 1
+  # Portfolio project — data loss acceptable
   skip_final_snapshot     = true
   deletion_protection     = false
 
