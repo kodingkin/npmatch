@@ -60,7 +60,7 @@ export default function Home() {
             What are you trying to build?
           </h1>
           <p className="text-sm text-white/40">
-            Describe your use case and get AI-matched npm packages — ranked by fit, not just popularity.
+            Describe your use case and get AI-matched npm packages - ranked by fit, not just popularity.
           </p>
         </div>
 

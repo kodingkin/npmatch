@@ -11,7 +11,7 @@ variable "private_subnet_ids" {
 }
 
 variable "ecs_sg_id" {
-  description = "ECS service security group — allowed to connect to Postgres"
+  description = "ECS service security group - allowed to connect to Postgres"
   type        = string
 }
 

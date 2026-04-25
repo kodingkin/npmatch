@@ -5,6 +5,7 @@ locals {
 resource "aws_ecr_repository" "this" {
   for_each             = toset(local.services)
   name                 = "${var.project}-${each.value}"
+  force_delete         = true
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration { scan_on_push = true }

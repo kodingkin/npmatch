@@ -15,6 +15,9 @@ jobs:
       run:
         working-directory: ./frontend
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

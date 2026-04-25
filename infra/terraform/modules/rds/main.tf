@@ -11,7 +11,7 @@ resource "aws_db_subnet_group" "this" {
 
 resource "aws_security_group" "rds" {
   name        = "${var.project}-rds-sg"
-  description = "Postgres — allow from ECS services only"
+  description = "Postgres - allow from ECS services only"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -37,7 +37,7 @@ resource "aws_security_group" "rds" {
 resource "aws_db_instance" "this" {
   identifier        = "${var.project}-postgres"
   engine            = "postgres"
-  engine_version    = "15.7"
+  engine_version    = "15.17"
   instance_class    = "db.t3.micro"
   allocated_storage = 20
   storage_type      = "gp2"
@@ -51,7 +51,7 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   backup_retention_period = 1
-  # Portfolio project — data loss acceptable
+  # Portfolio project - data loss acceptable
   skip_final_snapshot     = true
   deletion_protection     = false
 

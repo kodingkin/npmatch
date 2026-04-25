@@ -9,7 +9,7 @@ __pycache__/
 dist/
 build/
 
-# Environment — never bake secrets into the image
+# Environment - never bake secrets into the image
 .env
 .env.*
 

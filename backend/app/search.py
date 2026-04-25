@@ -124,7 +124,7 @@ async def _fetch_metadata(names: list[str]) -> list[dict]:
 
 async def package_search(query: str, top_k: int = 6) -> list[dict]:
     """
-    Hybrid search entry point — the only export.
+    Hybrid search entry point - the only export.
 
     FTS runs concurrently with embedding + vector search since it only needs
     the raw query text. This hides the OpenAI embedding latency behind the

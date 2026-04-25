@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "npmatch — find the right npm package",
+  title: "npmatch - find the right npm package",
   description: "AI-powered npm package finder. Describe what you need, get the best packages.",
 };
 

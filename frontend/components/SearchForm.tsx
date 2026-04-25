@@ -49,7 +49,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      {/* Main textarea — v3: TextField wrapping TextArea */}
+      {/* Main textarea - v3: TextField wrapping TextArea */}
       <TextField isDisabled={isLoading} className="w-full">
         <TextArea
           value={query}
@@ -72,7 +72,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
 
       {/* Options row */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Framework selector — v3: compound Select with ListBox */}
+        {/* Framework selector - v3: compound Select with ListBox */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/40 font-mono whitespace-nowrap">Framework</span>
           <Select
@@ -104,7 +104,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
           </Select>
         </div>
 
-        {/* Priority chips — v3: variant="secondary" for unselected, variant="primary" for selected */}
+        {/* Priority chips - v3: variant="secondary" for unselected, variant="primary" for selected */}
         <div className="flex flex-wrap gap-2">
           {PRIORITY_OPTIONS.map((p) => (
             <Chip

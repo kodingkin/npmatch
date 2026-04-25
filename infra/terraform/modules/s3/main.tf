@@ -31,7 +31,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
   }
 }
 
-# ALB service account ARN is region-specific — data source resolves it automatically
+# ALB service account ARN is region-specific - data source resolves it automatically
 data "aws_elb_service_account" "main" {}
 
 resource "aws_s3_bucket_policy" "alb_logs" {

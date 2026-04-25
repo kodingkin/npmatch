@@ -4,7 +4,7 @@ output "ecr_repository_urls" {
 }
 
 output "alb_dns_name" {
-  description = "ALB public DNS — use this to access the app"
+  description = "ALB public DNS - use this to access the app"
   value       = module.ecs.alb_dns_name
 }
 

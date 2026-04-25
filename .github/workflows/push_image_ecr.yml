@@ -15,7 +15,6 @@ on:
 
 env:
   AWS_REGION: ap-northeast-1
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-1.amazonaws.com
 
 jobs:
   build-push:
@@ -24,6 +23,9 @@ jobs:
     strategy:
       matrix:
         service: [frontend, backend, ingestion]
+
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -36,15 +38,18 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build & push
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         if: |
           inputs.service == 'all' || 
           inputs.service == matrix.service
         run: |
-          IMAGE=$ECR_REGISTRY/npmatch-${{ matrix.service }}:${{ github.sha }}
-          LATEST=$ECR_REGISTRY/npmatch-${{ matrix.service }}:latest
+          IMAGE=$REGISTRY/npmatch-${{ matrix.service }}:${{ github.sha }}
+          LATEST=$REGISTRY/npmatch-${{ matrix.service }}:latest
 
           docker build -t $IMAGE -t $LATEST ./${{ matrix.service }}
           docker push $IMAGE
