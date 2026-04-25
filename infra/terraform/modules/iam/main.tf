@@ -34,7 +34,8 @@ resource "aws_iam_role_policy" "ecs_execution_extras" {
           "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage"
+          "ecr:BatchGetImage",
+          "secretsmanager:GetSecretValue"
         ]
         Resource = "*"
       },

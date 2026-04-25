@@ -7,12 +7,12 @@ output "alb_arn" {
 }
 
 output "service_sg_id" {
-  description = "ECS service SG — referenced by RDS ingress rule"
+  description = "ECS service SG - referenced by RDS ingress rule"
   value       = aws_security_group.service.id
 }
 
 output "qdrant_sg_id" {
-  description = "Qdrant SG — referenced by ingestion task for direct upsert access"
+  description = "Qdrant SG - referenced by ingestion task for direct upsert access"
   value       = aws_security_group.qdrant.id
 }
 

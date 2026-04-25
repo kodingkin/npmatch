@@ -2,7 +2,7 @@
 
 resource "aws_security_group" "alb" {
   name        = "${var.project}-alb-sg"
-  description = "ALB — allow HTTP/HTTPS from anywhere"
+  description = "ALB - allow HTTP/HTTPS from anywhere"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -31,7 +31,7 @@ resource "aws_security_group" "alb" {
 
 resource "aws_security_group" "service" {
   name        = "${var.project}-service-sg"
-  description = "ECS services — allow traffic from ALB only"
+  description = "ECS services - allow traffic from ALB only"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -54,7 +54,7 @@ resource "aws_security_group" "service" {
 
 resource "aws_security_group" "qdrant" {
   name        = "${var.project}-qdrant-sg"
-  description = "Qdrant — allow from ECS services and ingestion only"
+  description = "Qdrant - allow from ECS services and ingestion only"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -77,7 +77,7 @@ resource "aws_security_group" "qdrant" {
 
 resource "aws_security_group" "efs" {
   name        = "${var.project}-efs-sg"
-  description = "EFS — allow NFS from Qdrant task only"
+  description = "EFS - allow NFS from Qdrant task only"
   vpc_id      = var.vpc_id
 
   ingress {

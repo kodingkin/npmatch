@@ -69,7 +69,7 @@ export function useSearch() {
                   packages,
                 }));
               } catch {
-                // malformed JSON — skip
+                // malformed JSON - skip
               }
             } else if (line.startsWith("event: error")) {
               setState((s) => ({

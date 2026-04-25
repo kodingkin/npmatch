@@ -24,6 +24,9 @@ jobs:
       matrix:
         service: [frontend, backend, ingestion]
 
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 

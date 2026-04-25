@@ -35,7 +35,7 @@ def build_prompt(
 
     return f"""You are an expert npm package advisor. A developer has described what they need, and a semantic search has retrieved the most relevant npm packages from a curated index.
 
-Your job is to recommend the best option(s) from the list below. Do NOT suggest packages outside this list — only recommend what is provided.
+Your job is to recommend the best option(s) from the list below. Do NOT suggest packages outside this list - only recommend what is provided.
 
 ---
 
@@ -54,7 +54,7 @@ Instructions:
 - If priorities or framework filters were provided, factor them in.
 - If no package is a strong fit, say so honestly rather than forcing a recommendation.
 - If the request is ambiguous or missing key details, state that there is not enough information to make a reliable recommendation.
-- Keep your response concise and practical — this is for a developer who wants to ship, not read an essay.
+- Keep your response concise and practical - this is for a developer who wants to ship, not read an essay.
 - Format your response in Markdown with proper blank lines between sections.
 - Use bullet points (`-`) for each package recommendation.
 - Start each package with `### package-name` as a header.

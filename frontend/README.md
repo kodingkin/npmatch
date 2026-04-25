@@ -1,4 +1,4 @@
-# npmatch — frontend
+# npmatch - frontend
 
 Frontend for [npmatch](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 
@@ -41,7 +41,7 @@ src/
         route.ts      # Route for health check on the backend API
   app/
     layout.tsx
-    page.tsx          # Main page — assembles all components
+    page.tsx          # Main page - assembles all components
     globals.css       # Tailwind base + custom animations/prose
   components/
     SearchForm.tsx    # Textarea, framework selector, priority chips, submit
@@ -57,14 +57,14 @@ src/
 
 ## HeroUI components used
 
-- `Button` — submit + retry/reset actions
-- `Textarea` — main query input
-- `Select` — framework selector
-- `Chip` — priority tag toggles
-- `Card` — package cards, LLM panel, status states
-- `Spinner` — HeroUI dark-themed spinner, used in loading states and section headers
-- `Link` — npm URL links
-- `Divider` — section separator
+- `Button` - submit + retry/reset actions
+- `Textarea` - main query input
+- `Select` - framework selector
+- `Chip` - priority tag toggles
+- `Card` - package cards, LLM panel, status states
+- `Spinner` - HeroUI dark-themed spinner, used in loading states and section headers
+- `Link` - npm URL links
+- `Divider` - section separator
 
 ## SSE streaming notes
 
