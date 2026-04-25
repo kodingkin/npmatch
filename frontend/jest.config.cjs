@@ -5,7 +5,7 @@ const createJestConfig = nextJest({
 });
 
 const customJestConfig = {
-  testEnvironment: 'jest-environment-jsdom',
+  testEnvironment: "jsdom",
   setupFilesAfterEnv: ['<rootDir>/jest.setup.tsx'],
 
   transformIgnorePatterns: [
@@ -19,4 +19,4 @@ const customJestConfig = {
   },
 };
 
-module.exports = createJestConfig(customJestConfig);
+export default createJestConfig(customJestConfig);
