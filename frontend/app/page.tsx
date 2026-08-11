@@ -6,13 +6,11 @@ import { PackageCard, PackageCardSkeleton } from "@/components/PackageCard";
 import { LlmPanel } from "@/components/LlmPanel";
 import { EmptyState, ErrorState } from "@/components/StatusStates";
 import { useSearch } from "@/hooks/useSearch";
-import { useHealthCheck } from "@/hooks/useHealthCheck";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 const SKELETON_COUNT = 3;
 
 export default function Home() {
-  const ok = useHealthCheck();
   const { state, search, reset } = useSearch();
   const { status, packages, llmText, errorMessage } = state;
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -30,6 +28,29 @@ export default function Home() {
   const isDone = status === "done";
   const isActive = isLoading || isStreaming || isDone;
 
+  const recommendedNames = useMemo(() => {
+    if (!isDone || !llmText || packages.length === 0) return new Set<string>();
+    const names = new Set<string>();
+    // Primary: match all `### package-name` headers (AI picks up to 3).
+    // Strip trailing punctuation LLMs append after headings (e.g. `### zod.`)
+    // so the captured name still matches the registry name.
+    for (const m of llmText.matchAll(/###\s+(\S+)/g)) {
+      const name = m[1].replace(/[.,;:!?)]+$/, "").toLowerCase();
+      if (name) names.add(name);
+    }
+    if (names.size > 0) return names;
+    // Fallback: find package names mentioned in the text.
+    // Match each name as a whole token so `react` doesn't highlight
+    // `preact`, `react-router`, or `react-dom`.
+    const lower = llmText.toLowerCase();
+    for (const pkg of packages) {
+      const name = pkg.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`(^|[^\\w.-])${name}($|[^\\w.-])`);
+      if (re.test(lower)) names.add(pkg.name);
+    }
+    return names;
+  }, [isDone, llmText, packages]);
+
   return (
     <main className="min-h-screen grid-bg">
       {/* Top bar */}
@@ -41,15 +62,6 @@ export default function Home() {
             </Link>
             <span className="text-white/30 text-xs font-mono">/ find the right package</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full transition-colors ${
-              ok === null ? "bg-yellow-500/80 animate-pulse" :
-              ok ? "bg-emerald-500/80 animate-pulse" : "bg-red-500/80 animate-pulse"
-            }`} />
-            <span className="text-[10px] font-mono text-white/30">
-              {ok === null ? "checking…" : ok ? "api ok" : "api down"}
-            </span>
-          </div>
         </div>
       </header>
 
@@ -57,10 +69,10 @@ export default function Home() {
         {/* Hero section */}
         <div className="flex flex-col gap-2">
           <h1 className="font-mono font-semibold text-2xl tracking-tight text-white/90">
-            What are you trying to build?
+            Tell us what you need
           </h1>
           <p className="text-sm text-white/40">
-            Describe your use case and get AI-matched npm packages - ranked by fit, not just popularity.
+            AI-matched packages — ranked by fit, not popularity.
           </p>
         </div>
 
@@ -94,7 +106,7 @@ export default function Home() {
               {packages.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {packages.map((pkg, i) => (
-                    <PackageCard key={pkg.name} pkg={pkg} index={i} />
+                    <PackageCard key={pkg.name} pkg={pkg} index={i} highlighted={recommendedNames.has(pkg.name)} />
                   ))}
                 </div>
               )}
@@ -146,7 +158,7 @@ export default function Home() {
           </p>
           {isDone && (
             <p className="text-[11px] font-mono text-white/20 text-center">
-              Showing top 6 results · Vector similarity search via Qdrant
+              Showing top {packages.length} results · Vector similarity search via Qdrant
             </p>
           )}
         </div>

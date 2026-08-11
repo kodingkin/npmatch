@@ -49,7 +49,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
 
   return (
     <div className="w-full flex flex-col gap-4">
-      {/* Main textarea - v3: TextField wrapping TextArea */}
+      {/* Main textarea */}
       <TextField isDisabled={isLoading} className="w-full">
         <TextArea
           value={query}
@@ -72,7 +72,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
 
       {/* Options row */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Framework selector - v3: compound Select with ListBox */}
+        {/* Framework selector */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-white/40 font-mono whitespace-nowrap">Framework</span>
           <Select
@@ -82,7 +82,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
             className="w-27.5"
           >
             <Label className="sr-only">Framework</Label>
-            <Select.Trigger className="h-8 px-3 bg-white/5 border border-white/10 rounded-lg hover:border-white/20 focus:border-npm-red transition-colors">
+            <Select.Trigger className="h-8 px-3 bg-white/5 border border-white/10 rounded-lg hover:border-white/20 focus:border-npm-red transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 hover:shadow-lg hover:shadow-black/40 hover:bg-white/10">
               <Select.Value className="text-xs font-mono text-white/70" />
               <Select.Indicator />
             </Select.Trigger>
@@ -104,7 +104,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
           </Select>
         </div>
 
-        {/* Priority chips - v3: variant="secondary" for unselected, variant="primary" for selected */}
+        {/* Priority chips */}
         <div className="flex flex-wrap gap-2">
           {PRIORITY_OPTIONS.map((p) => (
             <Chip
@@ -113,8 +113,10 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
               variant={priorities.has(p) ? "primary" : "secondary"}
               onClick={() => togglePriority(p)}
               className={[
-                "cursor-pointer transition-all duration-150 font-mono text-xs",
-                isLoading ? "opacity-50 cursor-not-allowed" : "",
+                "cursor-pointer font-mono text-xs",
+                "transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                "hover:scale-105 hover:shadow-lg hover:shadow-black/40",
+                isLoading ? "opacity-50 cursor-not-allowed hover:scale-100 hover:shadow-none" : "",
                 priorities.has(p)
                   ? "bg-npm-red border-npm-red text-white"
                   : "border-white/15 text-white/50 hover:border-white/30",
@@ -126,20 +128,14 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
         </div>
       </div>
 
-      {/* Submit row */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-white/30 font-mono">
-          <kbd className="px-1 py-0.5 border border-white/15 rounded text-[10px]">Enter</kbd>{" "}
-          to search,{" "}
-          <kbd className="px-1 py-0.5 border border-white/15 rounded text-[10px]">Shift+Enter</kbd>{" "}
-          for newline
-        </p>
+      {/* Submit row – button stays right */}
+      <div className="flex items-center justify-end">
         <Button
           variant="primary"
           onPress={handleSubmit}
           isDisabled={!query.trim() || isLoading}
           isPending={isLoading}
-          className="font-mono text-sm font-medium px-6 bg-npm-red text-white hover:bg-[#a82e2d] disabled:opacity-40 transition-colors duration-150"
+          className="font-mono text-sm font-medium px-6 bg-npm-red text-white hover:bg-[#a82e2d] disabled:opacity-40 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 hover:shadow-lg hover:shadow-black/40"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">

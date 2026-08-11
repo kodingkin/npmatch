@@ -85,8 +85,7 @@ npmatch/
 │   │   ├── StatusStates.tsx
 │   │   └── LlmPanel.tsx
 │   └── hooks/
-│       ├── useSearch.ts        # SSE streaming logic
-│       └── useHealthCheck.ts   # backend health polling
+│       └── useSearch.ts        # SSE streaming logic
 │
 └── infra/                      # Terraform
     ├── main.tf
