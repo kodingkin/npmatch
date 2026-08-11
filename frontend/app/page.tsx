@@ -6,13 +6,11 @@ import { PackageCard, PackageCardSkeleton } from "@/components/PackageCard";
 import { LlmPanel } from "@/components/LlmPanel";
 import { EmptyState, ErrorState } from "@/components/StatusStates";
 import { useSearch } from "@/hooks/useSearch";
-import { useHealthCheck } from "@/hooks/useHealthCheck";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 const SKELETON_COUNT = 3;
 
 export default function Home() {
-  const ok = useHealthCheck();
   const { state, search, reset } = useSearch();
   const { status, packages, llmText, errorMessage } = state;
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -30,6 +28,22 @@ export default function Home() {
   const isDone = status === "done";
   const isActive = isLoading || isStreaming || isDone;
 
+  const recommendedNames = useMemo(() => {
+    if (!isDone || !llmText || packages.length === 0) return new Set<string>();
+    const names = new Set<string>();
+    // Primary: match all `### package-name` headers (AI picks up to 3)
+    for (const m of llmText.matchAll(/###\s+(\S+)/g)) {
+      names.add(m[1].trim());
+    }
+    if (names.size > 0) return names;
+    // Fallback: find package names mentioned in the text
+    const lower = llmText.toLowerCase();
+    for (const pkg of packages) {
+      if (lower.includes(pkg.name.toLowerCase())) names.add(pkg.name);
+    }
+    return names;
+  }, [isDone, llmText, packages]);
+
   return (
     <main className="min-h-screen grid-bg">
       {/* Top bar */}
@@ -40,15 +54,6 @@ export default function Home() {
               <span className="text-npm-red">npm</span>atch
             </Link>
             <span className="text-white/30 text-xs font-mono">/ find the right package</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full transition-colors ${
-              ok === null ? "bg-yellow-500/80 animate-pulse" :
-              ok ? "bg-emerald-500/80 animate-pulse" : "bg-red-500/80 animate-pulse"
-            }`} />
-            <span className="text-[10px] font-mono text-white/30">
-              {ok === null ? "checking…" : ok ? "api ok" : "api down"}
-            </span>
           </div>
         </div>
       </header>
@@ -94,7 +99,7 @@ export default function Home() {
               {packages.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {packages.map((pkg, i) => (
-                    <PackageCard key={pkg.name} pkg={pkg} index={i} />
+                    <PackageCard key={pkg.name} pkg={pkg} index={i} highlighted={recommendedNames.has(pkg.name)} />
                   ))}
                 </div>
               )}

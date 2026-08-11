@@ -1,51 +1,60 @@
 "use client";
 
-import { Card, Chip, Link } from "@heroui/react";
+import { Card, Chip } from "@heroui/react";
 import type { NpmPackage } from "@/types";
 
 interface PackageCardProps {
   pkg: NpmPackage;
   index: number;
+  highlighted?: boolean;
 }
 
-export function PackageCard({ pkg, index }: PackageCardProps) {
+export function PackageCard({ pkg, index, highlighted }: PackageCardProps) {
   return (
-    <Card
-      className="border border-white/10 hover:border-white/20 hover:shadow-lg hover:shadow-black/40 transition-all duration-200 fade-in-up bg-white/5"
-      style={{ animationDelay: `${index * 60}ms` }}
+    <a
+      href={pkg.npm_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block cursor-pointer h-full"
     >
-      <Card.Header className="flex-row items-start justify-between gap-2 pb-1">
-        <Card.Title className="font-mono font-semibold text-sm text-white/90 leading-snug">
-          {pkg.name}
-        </Card.Title>
-        <Chip
-          size="sm"
-          className="bg-white/10 border border-white/10 font-mono text-[10px] text-white/50 shrink-0"
-        >
-          v{pkg.version}
-        </Chip>
-      </Card.Header>
-      <Card.Content className="py-1">
-        <p className="text-xs text-white/40 leading-relaxed line-clamp-3">
-          {pkg.description}
-        </p>
-      </Card.Content>
-      <Card.Footer className="pt-1">
-        <Link
-          href={pkg.npm_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-npm-red text-xs font-mono hover:text-[#e04544] flex items-center gap-1"
-        >
-          npm
-          <Link.Icon>
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3.5 3C3.5 2.72386 3.72386 2.5 4 2.5H9C9.27614 2.5 9.5 2.72386 9.5 3V8C9.5 8.27614 9.27614 8.5 9 8.5C8.72386 8.5 8.5 8.27614 8.5 8V4.20711L3.35355 9.35355C3.15829 9.54882 2.84171 9.54882 2.64645 9.35355C2.45118 9.15829 2.45118 8.84171 2.64645 8.64645L7.79289 3.5H4C3.72386 3.5 3.5 3.27614 3.5 3Z" fill="currentColor"/>
-            </svg>
-          </Link.Icon>
-        </Link>
-      </Card.Footer>
-    </Card>
+      <Card
+        className={[
+          "border transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+          "hover:scale-105 hover:shadow-lg fade-in-up h-full",
+          highlighted
+            ? "border-npm-red/40 bg-npm-red/5 shadow-[0_0_12px_rgba(203,56,55,0.1)] hover:border-npm-red/60 hover:shadow-[0_0_20px_rgba(203,56,55,0.2)] hover:bg-npm-red/10"
+            : "border-white/10 bg-white/5 hover:border-npm-red/40 hover:shadow-black/40 hover:bg-white/10",
+        ].join(" ")}
+        style={{ animationDelay: `${index * 60}ms` }}
+      >
+        <Card.Header className="flex-row items-start justify-between gap-2 pb-1">
+          <Card.Title className="font-mono font-semibold text-sm text-white/90 leading-snug">
+            {pkg.name}
+          </Card.Title>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {highlighted && (
+              <Chip
+                size="sm"
+                className="bg-npm-red/20 border border-npm-red/30 font-mono text-[10px] text-npm-red/80 shrink-0"
+              >
+                AI pick
+              </Chip>
+            )}
+            <Chip
+              size="sm"
+              className="bg-white/10 border border-white/10 font-mono text-[10px] text-white/50 shrink-0"
+            >
+              v{pkg.version}
+            </Chip>
+          </div>
+        </Card.Header>
+        <Card.Content className="py-1">
+          <p className="text-xs text-white/40 leading-relaxed line-clamp-3">
+            {pkg.description}
+          </p>
+        </Card.Content>
+      </Card>
+    </a>
   );
 }
 
@@ -54,7 +63,7 @@ export function PackageCard({ pkg, index }: PackageCardProps) {
 export function PackageCardSkeleton({ index }: { index: number }) {
   return (
     <Card
-      className="border border-white/10 bg-white/5"
+      className="border border-white/10 bg-white/5 h-full"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <Card.Header className="flex-row items-start justify-between gap-2 pb-1">
