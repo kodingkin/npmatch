@@ -48,13 +48,13 @@ describe("index pipeline", () => {
     // Need to reset modules so main() runs again with a fresh mock
     jest.resetModules();
 
-    jest.mock("../fetch", () => ({
+    jest.doMock("../fetch", () => ({
       fetchPackages: jest.fn().mockRejectedValue(new Error("network error")),
     }));
-    jest.mock("../embed", () => ({
+    jest.doMock("../embed", () => ({
       embedPackages: jest.fn(),
     }));
-    jest.mock("../upsert", () => ({
+    jest.doMock("../upsert", () => ({
       upsertPackages: jest.fn(),
     }));
 

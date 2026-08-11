@@ -97,9 +97,9 @@ When reviewing a pull request, always reference the rules in
 1. Read `.github/REVIEW_GUIDELINES.md` before starting the review.
 2. Classify every finding into one of the six categories:
    **Critical**, **Blocker**, **Recommend**, **Refactor**, **Security**, **Performance**.
-   Cite the rule code (e.g. `BL-3`, `SEC-4`) alongside each finding.
+   Do not cite rule codes in the review.
 3. Return the review using the **Review result template** from the guidelines
-   (tables of `File:Line | Rule | Finding` per category).
+   (tables of `File:Line | Finding` per category).
 4. Apply the verdict rules: any Critical/Security finding → `REQUEST CHANGES`;
    Blocker → `REQUEST CHANGES` or a tracked follow-up; the rest are non-blocking.
 5. After fixing a review finding, resolve the corresponding review thread

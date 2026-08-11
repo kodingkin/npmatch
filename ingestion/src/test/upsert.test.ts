@@ -1,34 +1,23 @@
 import type { EmbeddedPackage } from "../embed";
 
-// Define mock functions INSIDE the jest.mock factory so they're accessible
-// (jest.mock is hoisted, so external const references fail)
+// ts-jest does not hoist jest.mock, so top-level const mocks are in scope
+// inside the factories (same pattern as embed.test.ts)
 
-let mockUpsert: jest.Mock;
-let mockGetCollections: jest.Mock;
-let mockCreateCollection: jest.Mock;
-let mockQuery: jest.Mock;
-let mockEnd: jest.Mock;
-
-function initMocks() {
-  mockUpsert = jest.fn().mockResolvedValue(undefined);
-  mockGetCollections = jest.fn().mockResolvedValue({
-    collections: [{ name: "npmatch" }],
-  });
-  mockCreateCollection = jest.fn().mockResolvedValue(undefined);
-  mockQuery = jest.fn().mockResolvedValue(undefined);
-  mockEnd = jest.fn().mockResolvedValue(undefined);
-}
-
-jest.mock("@qdrant/js-client-rest", () => {
-  initMocks();
-  return {
-    QdrantClient: jest.fn().mockImplementation(() => ({
-      getCollections: mockGetCollections,
-      createCollection: mockCreateCollection,
-      upsert: mockUpsert,
-    })),
-  };
+const mockUpsert = jest.fn().mockResolvedValue(undefined);
+const mockGetCollections = jest.fn().mockResolvedValue({
+  collections: [{ name: "npmatch" }],
 });
+const mockCreateCollection = jest.fn().mockResolvedValue(undefined);
+const mockQuery = jest.fn().mockResolvedValue(undefined);
+const mockEnd = jest.fn().mockResolvedValue(undefined);
+
+jest.mock("@qdrant/js-client-rest", () => ({
+  QdrantClient: jest.fn().mockImplementation(() => ({
+    getCollections: mockGetCollections,
+    createCollection: mockCreateCollection,
+    upsert: mockUpsert,
+  })),
+}));
 
 jest.mock("pg", () => ({
   Pool: jest.fn().mockImplementation(() => ({
