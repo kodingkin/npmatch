@@ -1,6 +1,9 @@
+import { existsSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
 
-loadEnvFile();
+if (existsSync('.env')) {
+  loadEnvFile();
+}
 
 function getEnvNumber(key: string, defaultValue: number): number {
   const value = process.env[key]?.trim();
