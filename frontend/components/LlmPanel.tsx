@@ -27,7 +27,7 @@ export function LlmPanel({ text, isStreaming }: LlmPanelProps) {
   return (
     <Card className="border border-white/10 bg-white/5 fade-in-up">
       <Card.Content className="px-6 py-5">
-        <div className={`prose-npm ${isStreaming ? "cursor-blink" : ""}`}>
+        <div className={`prose-npm ${isStreaming ? "cursor-blink" : ""}`} aria-live="polite">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
       </Card.Content>

@@ -19,7 +19,7 @@ export function PackageCard({ pkg, index, highlighted }: PackageCardProps) {
     >
       <Card
         className={[
-          "border transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+          "border transition duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
           "hover:scale-105 hover:shadow-lg fade-in-up h-full",
           highlighted
             ? "border-npm-red/40 bg-npm-red/5 shadow-[0_0_12px_rgba(203,56,55,0.1)] hover:border-npm-red/60 hover:shadow-[0_0_20px_rgba(203,56,55,0.2)] hover:bg-npm-red/10"
@@ -28,7 +28,7 @@ export function PackageCard({ pkg, index, highlighted }: PackageCardProps) {
         style={{ animationDelay: `${index * 60}ms` }}
       >
         <Card.Header className="flex-row items-start justify-between gap-2 pb-1">
-          <Card.Title className="font-mono font-semibold text-sm text-white/90 leading-snug">
+          <Card.Title className="font-mono font-semibold text-sm text-white/90 leading-snug truncate min-w-0">
             {pkg.name}
           </Card.Title>
           <div className="flex items-center gap-1.5 shrink-0">

@@ -57,12 +57,15 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
           onKeyDown={handleKeyDown}
           placeholder="Describe what you need… e.g. 'a lightweight date formatting library with tree-shaking support'"
           rows={3}
+          aria-label="Describe what you need"
+          name="query"
+          autoComplete="off"
           className={[
             "w-full min-h-20 max-h-40 resize-none",
             "bg-white/5 border border-white/10 rounded-xl",
             "px-4 py-3 text-sm font-mono text-white/90",
             "placeholder:text-white/25",
-            "focus:outline-none focus:border-npm-red focus:ring-0",
+            "focus:outline-none focus:border-npm-red focus-visible:ring-2 focus-visible:ring-npm-red/40 focus-visible:ring-offset-0",
             "hover:border-white/20",
             "transition-colors duration-200",
             "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -82,7 +85,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
             className="w-27.5"
           >
             <Label className="sr-only">Framework</Label>
-            <Select.Trigger className="h-8 px-3 bg-white/5 border border-white/10 rounded-lg hover:border-white/20 focus:border-npm-red transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 hover:shadow-lg hover:shadow-black/40 hover:bg-white/10">
+            <Select.Trigger className="h-8 px-3 bg-white/5 border border-white/10 rounded-lg hover:border-white/20 focus:border-npm-red transition duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 hover:shadow-lg hover:shadow-black/40 hover:bg-white/10">
               <Select.Value className="text-xs font-mono text-white/70" />
               <Select.Indicator />
             </Select.Trigger>
@@ -111,10 +114,19 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
               key={p}
               size="sm"
               variant={priorities.has(p) ? "primary" : "secondary"}
+              role="button"
+              tabIndex={0}
+              aria-pressed={priorities.has(p)}
               onClick={() => togglePriority(p)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  togglePriority(p);
+                }
+              }}
               className={[
                 "cursor-pointer font-mono text-xs",
-                "transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+                "transition duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
                 "hover:scale-105 hover:shadow-lg hover:shadow-black/40",
                 isLoading ? "opacity-50 cursor-not-allowed hover:scale-100 hover:shadow-none" : "",
                 priorities.has(p)
@@ -135,7 +147,7 @@ export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
           onPress={handleSubmit}
           isDisabled={!query.trim() || isLoading}
           isPending={isLoading}
-          className="font-mono text-sm font-medium px-6 bg-npm-red text-white hover:bg-[#a82e2d] disabled:opacity-40 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 hover:shadow-lg hover:shadow-black/40"
+          className="font-mono text-sm font-medium px-6 bg-npm-red text-white hover:bg-[#a82e2d] disabled:opacity-40 transition duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-105 hover:shadow-lg hover:shadow-black/40"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">

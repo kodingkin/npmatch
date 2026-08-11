@@ -16,11 +16,11 @@ export default function Home() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isActive) {
-      requestAnimationFrame(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-      });
-    }
+    if (!isActive) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    });
   }, [llmText, status]);
 
   const isLoading = status === "loading";
@@ -52,7 +52,14 @@ export default function Home() {
   }, [isDone, llmText, packages]);
 
   return (
-    <main className="min-h-screen grid-bg">
+    <>
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-black focus:text-white focus:border focus:border-white/20 focus:font-mono focus:text-sm"
+      >
+        Skip to content
+      </a>
+      <main id="main" className="min-h-screen grid-bg scroll-mt-12">
       {/* Top bar */}
       <header className="border-b border-white/5 bg-black/60 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 h-12 flex items-center justify-between">
@@ -87,9 +94,9 @@ export default function Home() {
             {/* Package cards */}
             <section>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-xs font-mono text-white/30 uppercase tracking-widest">
+                <h2 className="text-xs font-mono text-white/30 uppercase tracking-widest">
                   Matched packages
-                </span>
+                </h2>
                 {isLoading && <Spinner size="sm" color="accent" />}
               </div>
 
@@ -116,9 +123,9 @@ export default function Home() {
             {(llmText || isStreaming) && packages.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-xs font-mono text-white/30 uppercase tracking-widest">
+                  <h2 className="text-xs font-mono text-white/30 uppercase tracking-widest">
                     AI recommendation
-                  </span>
+                  </h2>
                   {isStreaming && <Spinner size="sm" color="accent" />}
                 </div>
                 <LlmPanel text={llmText} isStreaming={isStreaming} />
@@ -152,7 +159,7 @@ export default function Home() {
               rel="noopener noreferrer"
               className="text-white/30 hover:text-white/80 transition-colors no-underline"
             >
-              Github
+              GitHub
               <Link.Icon />
             </Link>
           </p>
@@ -163,6 +170,7 @@ export default function Home() {
           )}
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
