@@ -50,6 +50,7 @@ The ingestion workflow is `workflow_dispatch` only (manual trigger), not on push
 - Setup file (`src/test/setup.ts`) sets required env vars so `env.ts` doesn't throw at module scope
 - All external dependencies are mocked (https, OpenAI, Qdrant, pg)
 
+
 ## Notes
 
 - CommonJS (`"type": "commonjs"`) — uses `require`-style imports
