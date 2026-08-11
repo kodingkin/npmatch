@@ -4,5 +4,13 @@
 **/.terraform/
 **/.note.md
 **/tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# OpenClaude local overrides
 .openclaude/settings.local.json
+**/.openclaude/settings.local.json
 frontend/.openclaude/
+
+# Build artifacts
+frontend/next-env.d.ts
+CLAUDE 2.md

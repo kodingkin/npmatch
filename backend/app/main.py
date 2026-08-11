@@ -1,7 +1,8 @@
-import os
 import json
 import logging
+import os
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -9,9 +10,9 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 import app.env
+from app.llm import stream_response
 from app.models import SearchRequest
 from app.search import package_search
-from app.llm import stream_response
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,14 +54,15 @@ async def health():
 @limiter.limit("2/minute")
 async def search(request: Request, body: SearchRequest):
     logger.info(
-        f"Search request: query='{body.query}' framework={body.framework} priorities={body.priorities}"
+        f"Search request: query='{body.query}' "
+        f"framework={body.framework} priorities={body.priorities}"
     )
 
     try:
         packages = await package_search(body.query)
     except Exception as e:
         logger.error(f"Package search failed: {e}")
-        raise HTTPException(status_code=502, detail="Failed in hybrid search")
+        raise HTTPException(status_code=502, detail="Failed in hybrid search") from e
 
     if not packages:
         logger.info("No packages found for query, returning empty response")
