@@ -3,3 +3,6 @@
 **/terraform.tfvars
 **/.terraform/
 **/.note.md
+**/tsconfig.tsbuildinfo
+.openclaude/settings.local.json
+frontend/.openclaude/

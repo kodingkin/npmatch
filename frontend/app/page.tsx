@@ -62,10 +62,10 @@ export default function Home() {
         {/* Hero section */}
         <div className="flex flex-col gap-2">
           <h1 className="font-mono font-semibold text-2xl tracking-tight text-white/90">
-            What are you trying to build?
+            Tell us what you need
           </h1>
           <p className="text-sm text-white/40">
-            Describe your use case and get AI-matched npm packages - ranked by fit, not just popularity.
+            AI-matched packages — ranked by fit, not popularity.
           </p>
         </div>
 
