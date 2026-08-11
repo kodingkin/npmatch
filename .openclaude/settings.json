@@ -1,0 +1,23 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q '^frontend/'; then cd frontend && npx eslint \"$CLAUDE_TOOL_INPUT_FILE_PATH\" --max-warnings 0 2>/dev/null; fi"
+          },
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q '^backend/.*\\.py$'; then cd backend && uv run ruff check \"$CLAUDE_TOOL_INPUT_FILE_PATH\" 2>/dev/null; fi"
+          },
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q '^ingestion/.*\\.ts$'; then cd ingestion && npx eslint \"$CLAUDE_TOOL_INPUT_FILE_PATH\" 2>/dev/null; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

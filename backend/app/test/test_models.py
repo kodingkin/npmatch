@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models import SearchRequest, Package, SearchResponse
+from app.models import Package, SearchRequest, SearchResponse
 
 
 class TestSearchRequest:
