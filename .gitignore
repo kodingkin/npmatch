@@ -11,6 +11,9 @@
 **/.openclaude/settings.local.json
 frontend/.openclaude/
 
+# ClawHub skill lock
+**/.clawhub/
+
 # Build artifacts
 frontend/next-env.d.ts
 CLAUDE 2.md

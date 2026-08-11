@@ -42,3 +42,9 @@ The SSE parser in `useSearch` handles `event: packages`, `data:`, `event: error`
 - Tests in `components/test/` — one per component
 - Uses `@testing-library/react` and `@testing-library/user-event`
 - CSS modules mocked via `identity-obj-proxy`
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
