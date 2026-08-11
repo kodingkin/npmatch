@@ -1,0 +1,23 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "p=$(cat | jq -r '.tool_input.file_path'); case \"$p\" in frontend/*) (cd frontend && npx eslint \"${p#frontend/}\" --max-warnings 0);; esac"
+          },
+          {
+            "type": "command",
+            "command": "p=$(cat | jq -r '.tool_input.file_path'); case \"$p\" in backend/*.py) (cd backend && uv run ruff check \"${p#backend/}\");; esac"
+          },
+          {
+            "type": "command",
+            "command": "p=$(cat | jq -r '.tool_input.file_path'); case \"$p\" in ingestion/*.ts) (cd ingestion && npx eslint \"${p#ingestion/}\");; esac"
+          }
+        ]
+      }
+    ]
+  }
+}

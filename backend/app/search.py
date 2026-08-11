@@ -1,9 +1,10 @@
-import os
 import asyncio
+import logging
+import os
+
+import asyncpg
 from openai import AsyncOpenAI
 from qdrant_client import AsyncQdrantClient
-import asyncpg
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
