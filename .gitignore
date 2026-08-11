@@ -3,3 +3,11 @@
 **/terraform.tfvars
 **/.terraform/
 **/.note.md
+
+# OpenClaude local overrides
+.openclaude/settings.local.json
+**/.openclaude/settings.local.json
+
+# Build artifacts
+*.tsbuildinfo
+frontend/next-env.d.ts

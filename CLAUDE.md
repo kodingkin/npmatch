@@ -50,7 +50,7 @@ npm run lint         # ESLint
 - **SSE protocol**: backend streams `event: packages`, `data:` chunks, `event: done`/`event: error`
 - **Tests**: Jest (frontend), pytest + pytest-asyncio (backend), Jest + ts-jest (ingestion)
 - **CI**: path-filtered workflows per service — changes to `frontend/` trigger frontend CI, etc.
-- **Branch**: current work is on `feat/update-ui`
+- **Branch**: check `git branch --show-current` — CLAUDE.md may differ per branch
 
 ## Environment
 
