@@ -31,15 +31,22 @@ export default function Home() {
   const recommendedNames = useMemo(() => {
     if (!isDone || !llmText || packages.length === 0) return new Set<string>();
     const names = new Set<string>();
-    // Primary: match all `### package-name` headers (AI picks up to 3)
+    // Primary: match all `### package-name` headers (AI picks up to 3).
+    // Strip trailing punctuation LLMs append after headings (e.g. `### zod.`)
+    // so the captured name still matches the registry name.
     for (const m of llmText.matchAll(/###\s+(\S+)/g)) {
-      names.add(m[1].trim());
+      const name = m[1].replace(/[.,;:!?)]+$/, "").toLowerCase();
+      if (name) names.add(name);
     }
     if (names.size > 0) return names;
-    // Fallback: find package names mentioned in the text
+    // Fallback: find package names mentioned in the text.
+    // Match each name as a whole token so `react` doesn't highlight
+    // `preact`, `react-router`, or `react-dom`.
     const lower = llmText.toLowerCase();
     for (const pkg of packages) {
-      if (lower.includes(pkg.name.toLowerCase())) names.add(pkg.name);
+      const name = pkg.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`(^|[^\\w.-])${name}($|[^\\w.-])`);
+      if (re.test(lower)) names.add(pkg.name);
     }
     return names;
   }, [isDone, llmText, packages]);
@@ -151,7 +158,7 @@ export default function Home() {
           </p>
           {isDone && (
             <p className="text-[11px] font-mono text-white/20 text-center">
-              Showing top 6 results · Vector similarity search via Qdrant
+              Showing top {packages.length} results · Vector similarity search via Qdrant
             </p>
           )}
         </div>

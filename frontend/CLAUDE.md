@@ -20,7 +20,7 @@ npm run test:coverage
 - **API proxy**: `app/api/search/route.ts` — POST handler that forwards to the FastAPI backend, streams SSE response through. `API_URL` env var (defaults to `http://localhost:8000`)
 - **Health check**: `app/api/search/health/route.ts` — GET endpoint that pings the backend's `/health`
 - **Components**: `components/SearchForm.tsx`, `PackageCard.tsx`, `LlmPanel.tsx`, `StatusStates.tsx`
-- **Hooks**: `useSearch` (SSE stream parser + state machine), `useHealthCheck` (periodic backend ping)
+- **Hooks**: `useSearch` (SSE stream parser + state machine)
 - **Types**: `types/index.ts` — `SearchState`, `NpmPackage`, `Framework`, `Priority`
 
 ## State machine

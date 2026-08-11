@@ -50,7 +50,6 @@ src/
     StatusStates.tsx  # EmptyState + ErrorState
   hooks/
     useSearch.ts      # All SSE streaming logic, search state machine
-    useHealthCheck.ts # Health check Pooling on python backend
   types/
     index.ts          # Shared types, constants
 ```
