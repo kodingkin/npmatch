@@ -48,7 +48,7 @@ npm run lint         # ESLint
 - **Backend search** is a hybrid: concurrent vector search (Qdrant) + FTS (Postgres), fused with Reciprocal Rank Fusion (RRF)
 - **Rate limiting**: backend limits `/api/search` to 2 requests/minute per IP (slowapi)
 - **SSE protocol**: backend streams `event: packages`, `data:` chunks, `event: done`/`event: error`
-- **Tests**: Jest (frontend), pytest + pytest-asyncio (backend), no tests yet for ingestion
+- **Tests**: Jest (frontend), pytest + pytest-asyncio (backend), Jest + ts-jest (ingestion)
 - **CI**: path-filtered workflows per service — changes to `frontend/` trigger frontend CI, etc.
 - **Branch**: current work is on `feat/update-ui`
 
@@ -62,7 +62,7 @@ npm run lint         # ESLint
 
 ### General
 - Never commit secrets or `.env` files (gitignored)
-- Pre-commit hook runs lint per changed service — commits that fail lint are blocked
+- PostToolUse hooks lint each file as the agent edits it (eslint for frontend/ingestion, ruff for backend). They do not gate commits — linting failures surface as hook errors on the edit
 - Use `/lint-all` to lint everything, `/test-all` to run all tests
 
 ### Frontend (TypeScript)
@@ -88,3 +88,17 @@ npm run lint         # ESLint
 - Pipeline steps are idempotent — `ON CONFLICT DO UPDATE` in Postgres, Qdrant upsert
 - Environment loaded via `node:process` `loadEnvFile()`
 - All config centralized in `src/env.ts`
+
+## PR review
+
+When reviewing a pull request, always reference the rules in
+`.github/REVIEW_GUIDELINES.md`:
+
+1. Read `.github/REVIEW_GUIDELINES.md` before starting the review.
+2. Classify every finding into one of the six categories:
+   **Critical**, **Blocker**, **Recommend**, **Refactor**, **Security**, **Performance**.
+   Cite the rule code (e.g. `BL-3`, `SEC-4`) alongside each finding.
+3. Return the review using the **Review result template** from the guidelines
+   (tables of `File:Line | Rule | Finding` per category).
+4. Apply the verdict rules: any Critical/Security finding → `REQUEST CHANGES`;
+   Blocker → `REQUEST CHANGES` or a tracked follow-up; the rest are non-blocking.
