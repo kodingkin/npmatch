@@ -11,3 +11,4 @@
 # Build artifacts
 *.tsbuildinfo
 frontend/next-env.d.ts
+CLAUDE 2.md

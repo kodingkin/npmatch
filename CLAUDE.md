@@ -104,3 +104,8 @@ When reviewing a pull request, always reference the rules in
    Blocker → `REQUEST CHANGES` or a tracked follow-up; the rest are non-blocking.
 5. After fixing a review finding, resolve the corresponding review thread
    (via `gh api graphql` with `resolveReviewThread`).
+6. Format review comments with markdown tables and emoji — never plain text.
+   Post a summary comment with a `| Category | Findings |` overview table. File
+   individual findings as separate GitHub review comments on the relevant diff lines.
+   Use emoji-coded category headers (`🔴 Critical`, `🟠 Blocker`, `🟡 Recommend`,
+   `🔵 Refactor`, `🔐 Security`, `⚡ Performance`).
