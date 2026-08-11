@@ -102,3 +102,5 @@ When reviewing a pull request, always reference the rules in
    (tables of `File:Line | Rule | Finding` per category).
 4. Apply the verdict rules: any Critical/Security finding → `REQUEST CHANGES`;
    Blocker → `REQUEST CHANGES` or a tracked follow-up; the rest are non-blocking.
+5. After fixing a review finding, resolve the corresponding review thread
+   (via `gh api graphql` with `resolveReviewThread`).
