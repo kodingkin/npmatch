@@ -41,7 +41,7 @@ fetchPackages() → embedPackages() → upsertPackages()
 
 ## CI
 
-The ingestion workflow is `workflow_dispatch` only (manual trigger), not on push. It runs the full pipeline with secrets from GitHub Actions.
+Push-triggered `test` job runs on changes to `ingestion/**`. The full pipeline ingestion job is `workflow_dispatch` only (manual trigger) and uses secrets from GitHub Actions.
 
 ## Testing
 

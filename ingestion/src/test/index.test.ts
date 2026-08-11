@@ -23,27 +23,46 @@ describe("index pipeline", () => {
   });
 
   it("calls fetch, embed, and upsert in sequence", async () => {
+    // Import index.ts to exercise the real pipeline orchestration
+    await import("../index");
+
     const { fetchPackages } = await import("../fetch");
     const { embedPackages } = await import("../embed");
     const { upsertPackages } = await import("../upsert");
 
-    // Simulate the pipeline as index.ts would
-    const packages = await fetchPackages();
     expect(fetchPackages).toHaveBeenCalled();
-    expect(packages).toHaveLength(1);
+    expect(embedPackages).toHaveBeenCalled();
+    expect(upsertPackages).toHaveBeenCalled();
 
-    const embedded = await embedPackages(packages);
-    expect(embedPackages).toHaveBeenCalledWith(packages);
-    expect(embedded).toHaveLength(1);
+    // Verify call order
+    const fetchOrder = (fetchPackages as jest.Mock).mock.invocationCallOrder[0];
+    const embedOrder = (embedPackages as jest.Mock).mock.invocationCallOrder[0];
+    const upsertOrder = (upsertPackages as jest.Mock).mock.invocationCallOrder[0];
+    expect(fetchOrder).toBeLessThan(embedOrder);
+    expect(embedOrder).toBeLessThan(upsertOrder);
 
-    await upsertPackages(embedded);
-    expect(upsertPackages).toHaveBeenCalledWith(embedded);
+    expect(mockExit).toHaveBeenCalledWith(0);
   });
 
-  it("propagates errors from fetchPackages", async () => {
-    const { fetchPackages } = await import("../fetch");
-    (fetchPackages as jest.Mock).mockRejectedValueOnce(new Error("network error"));
+  it("exits with code 1 on failure", async () => {
+    // Need to reset modules so main() runs again with a fresh mock
+    jest.resetModules();
 
-    await expect(fetchPackages()).rejects.toThrow("network error");
+    jest.mock("../fetch", () => ({
+      fetchPackages: jest.fn().mockRejectedValue(new Error("network error")),
+    }));
+    jest.mock("../embed", () => ({
+      embedPackages: jest.fn(),
+    }));
+    jest.mock("../upsert", () => ({
+      upsertPackages: jest.fn(),
+    }));
+
+    await import("../index");
+
+    // Wait for the rejected promise microtask
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockExit).toHaveBeenCalledWith(1);
   });
 });
