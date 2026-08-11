@@ -1,13 +1,33 @@
 name: Ingestion
 
 on:
-  workflow_dispatch
-  
+  workflow_dispatch:
+  push:
+    paths: ['ingestion/**']
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: ./ingestion
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ingestion/package-lock.json
+      - run: npm ci
+      - run: npm test
+
   ingestion:
+    # Full pipeline job — manual trigger only, so pushes only run tests
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     defaults:
       run:
         working-directory: ./ingestion

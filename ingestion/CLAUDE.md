@@ -36,12 +36,20 @@ fetchPackages() → embedPackages() → upsertPackages()
 
 ## Environment
 
-- Loads `.env` via `dotenv` in `src/env.ts`
+- Loads `.env` via `node:process` `loadEnvFile()`
 - Key vars: `OPENAI_API_KEY`, `DATABASE_CONNECTION_STRING`, `QDRANT_URL`, `QDRANT_CLOUD_API_KEY`
 
 ## CI
 
-The ingestion workflow is `workflow_dispatch` only (manual trigger), not on push. It runs the full pipeline with secrets from GitHub Actions.
+Push-triggered `test` job runs on changes to `ingestion/**`. The full pipeline ingestion job is `workflow_dispatch` only (manual trigger) and uses secrets from GitHub Actions.
+
+## Testing
+
+- Jest with ts-jest for CommonJS TypeScript
+- Tests in `src/test/` — one per module (fetch, embed, upsert, env, index)
+- Setup file (`src/test/setup.ts`) sets required env vars so `env.ts` doesn't throw at module scope
+- All external dependencies are mocked (https, OpenAI, Qdrant, pg)
+
 
 ## Notes
 
