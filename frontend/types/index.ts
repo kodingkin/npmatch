@@ -39,3 +39,50 @@ export const PRIORITY_OPTIONS = [
 ] as const;
 
 export type Priority = (typeof PRIORITY_OPTIONS)[number];
+
+export interface TopItem {
+  label: string;
+  count: number;
+}
+
+export interface AnalyticsSummary {
+  total_visits: number;
+  unique_visitors: number;
+  total_searches: number;
+  visits_last_24h: number;
+  searches_last_24h: number;
+  top_queries: TopItem[];
+  top_frameworks: TopItem[];
+  top_referrers: TopItem[];
+}
+
+export interface PageView {
+  visited_at: string;
+  ip_hash: string;
+  user_agent: string | null;
+  referrer: string | null;
+}
+
+export interface SearchEvent {
+  searched_at: string;
+  query: string;
+  framework: string | null;
+  priorities: string[] | null;
+  result_count: number;
+}
+
+export interface AnalyticsData {
+  summary: AnalyticsSummary;
+  visits: PageView[];
+  searches: SearchEvent[];
+}
+
+export type AnalyticsSection = "summary" | "visits" | "searches";
+
+export interface AnalyticsResult {
+  summary: AnalyticsSummary | null;
+  visits: PageView[] | null;
+  searches: SearchEvent[] | null;
+  /** Per-section HTTP status on failure; null means a network error. Absent = success. */
+  errors: Partial<Record<AnalyticsSection, number | null>>;
+}

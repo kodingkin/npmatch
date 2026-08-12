@@ -18,7 +18,7 @@ async def test_vector_search_skips_missing_metadata():
 
     with (
         patch("app.search.get_qdrant_client", return_value=qdrant),
-        patch("app.search._get_pool", AsyncMock(return_value=mock_pool)),
+        patch("app.search.get_pool", AsyncMock(return_value=mock_pool)),
         patch("app.search._fts_search", AsyncMock(return_value=[])),
         patch("app.search._embed_query", AsyncMock(return_value=[0.1])),
     ):
@@ -57,7 +57,7 @@ async def test_hybrid_fusion_vector_and_fts():
 
     with (
         patch("app.search.get_qdrant_client", return_value=qdrant),
-        patch("app.search._get_pool", AsyncMock(return_value=mock_pool)),
+        patch("app.search.get_pool", AsyncMock(return_value=mock_pool)),
         patch("app.search._fts_search", AsyncMock(return_value=fts_results)),
         patch("app.search._embed_query", AsyncMock(return_value=[0.1, 0.2])),
     ):
@@ -91,7 +91,7 @@ async def test_rrf_ordering_prefers_shared_results():
 
     with (
         patch("app.search.get_qdrant_client", return_value=qdrant),
-        patch("app.search._get_pool", AsyncMock(return_value=mock_pool)),
+        patch("app.search.get_pool", AsyncMock(return_value=mock_pool)),
         patch("app.search._fts_search", AsyncMock(return_value=fts_results)),
         patch("app.search._embed_query", AsyncMock(return_value=[0.1])),
     ):
