@@ -205,7 +205,8 @@ class TestListSearches:
 
 
 class TestAnalyticsEndpoints:
-    def test_summary_requires_token(self):
+    def test_summary_requires_token(self, monkeypatch):
+        monkeypatch.setenv("ANALYTICS_TOKEN", "secret")
         with TestClient(app) as client:
             res = client.get("/api/analytics/summary")
         assert res.status_code == 401
@@ -236,12 +237,14 @@ class TestAnalyticsEndpoints:
         assert res.status_code == 200
         assert res.json()["total_visits"] == 10
 
-    def test_visits_requires_token(self):
+    def test_visits_requires_token(self, monkeypatch):
+        monkeypatch.setenv("ANALYTICS_TOKEN", "secret")
         with TestClient(app) as client:
             res = client.get("/api/analytics/visits")
         assert res.status_code == 401
 
-    def test_searches_requires_token(self):
+    def test_searches_requires_token(self, monkeypatch):
+        monkeypatch.setenv("ANALYTICS_TOKEN", "secret")
         with TestClient(app) as client:
             res = client.get("/api/analytics/searches")
         assert res.status_code == 401
