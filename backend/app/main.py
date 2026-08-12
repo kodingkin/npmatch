@@ -10,6 +10,15 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 import app.env
+from app.analytics import (
+    client_ip,
+    get_analytics_summary,
+    hash_ip,
+    list_page_views,
+    list_searches,
+    record_page_view,
+    record_search,
+)
 from app.llm import stream_response
 from app.models import SearchRequest
 from app.search import package_search
@@ -50,6 +59,66 @@ async def health():
     return {"status": "ok"}
 
 
+def _require_analytics_token(request: Request) -> None:
+    expected = os.environ.get("ANALYTICS_TOKEN")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Analytics token not configured")
+    if request.headers.get("x-analytics-token") != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+@app.post("/api/track/pageview")
+@limiter.limit("120/minute")
+async def track_pageview(request: Request):
+    referrer = None
+    try:
+        body = await request.json()
+        referrer = body.get("referrer")
+    except Exception:
+        pass
+
+    try:
+        await record_page_view(
+            ip_hash=hash_ip(client_ip(request)),
+            user_agent=request.headers.get("user-agent"),
+            referrer=referrer or request.headers.get("referer"),
+        )
+    except Exception as e:
+        logger.warning(f"Failed to record page view: {e}")
+
+    return {"ok": True}
+
+
+@app.get("/api/analytics/summary")
+async def analytics_summary(request: Request):
+    _require_analytics_token(request)
+    try:
+        return await get_analytics_summary()
+    except Exception as e:
+        logger.error(f"Analytics summary failed: {e}")
+        raise HTTPException(status_code=502, detail="Analytics query failed") from e
+
+
+@app.get("/api/analytics/visits")
+async def analytics_visits(request: Request, limit: int = 50):
+    _require_analytics_token(request)
+    try:
+        return await list_page_views(limit=min(limit, 200))
+    except Exception as e:
+        logger.error(f"Analytics visits failed: {e}")
+        raise HTTPException(status_code=502, detail="Analytics query failed") from e
+
+
+@app.get("/api/analytics/searches")
+async def analytics_searches(request: Request, limit: int = 50):
+    _require_analytics_token(request)
+    try:
+        return await list_searches(limit=min(limit, 200))
+    except Exception as e:
+        logger.error(f"Analytics searches failed: {e}")
+        raise HTTPException(status_code=502, detail="Analytics query failed") from e
+
+
 @app.post("/api/search")
 @limiter.limit("2/minute")
 async def search(request: Request, body: SearchRequest):
@@ -63,6 +132,18 @@ async def search(request: Request, body: SearchRequest):
     except Exception as e:
         logger.error(f"Package search failed: {e}")
         raise HTTPException(status_code=502, detail="Failed in hybrid search") from e
+
+    try:
+        await record_search(
+            query=body.query,
+            framework=body.framework,
+            priorities=body.priorities,
+            result_count=len(packages),
+            ip_hash=hash_ip(client_ip(request)),
+            user_agent=request.headers.get("user-agent"),
+        )
+    except Exception as e:
+        logger.warning(f"Failed to record search event: {e}")
 
     if not packages:
         logger.info("No packages found for query, returning empty response")
