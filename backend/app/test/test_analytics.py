@@ -1,4 +1,5 @@
 import hashlib
+import logging
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -248,3 +249,52 @@ class TestAnalyticsEndpoints:
         with TestClient(app) as client:
             res = client.get("/api/analytics/searches")
         assert res.status_code == 401
+
+    def test_summary_502_on_db_error_logs_traceback(self, monkeypatch, caplog):
+        monkeypatch.setenv("ANALYTICS_TOKEN", "secret")
+        with (
+            patch(
+                "app.main.get_analytics_summary",
+                AsyncMock(side_effect=RuntimeError("db down")),
+            ),
+            TestClient(app) as client,
+            caplog.at_level(logging.ERROR),
+        ):
+            res = client.get(
+                "/api/analytics/summary", headers={"x-analytics-token": "secret"}
+            )
+        assert res.status_code == 502
+        assert res.json() == {"detail": "Analytics query failed"}
+        assert any(
+            "Analytics summary failed" in r.message and r.exc_info for r in caplog.records
+        )
+
+    def test_visits_502_on_db_error(self, monkeypatch):
+        monkeypatch.setenv("ANALYTICS_TOKEN", "secret")
+        with (
+            patch(
+                "app.main.list_page_views",
+                AsyncMock(side_effect=RuntimeError("db down")),
+            ),
+            TestClient(app) as client,
+        ):
+            res = client.get(
+                "/api/analytics/visits", headers={"x-analytics-token": "secret"}
+            )
+        assert res.status_code == 502
+        assert res.json() == {"detail": "Analytics query failed"}
+
+    def test_searches_502_on_db_error(self, monkeypatch):
+        monkeypatch.setenv("ANALYTICS_TOKEN", "secret")
+        with (
+            patch(
+                "app.main.list_searches",
+                AsyncMock(side_effect=RuntimeError("db down")),
+            ),
+            TestClient(app) as client,
+        ):
+            res = client.get(
+                "/api/analytics/searches", headers={"x-analytics-token": "secret"}
+            )
+        assert res.status_code == 502
+        assert res.json() == {"detail": "Analytics query failed"}

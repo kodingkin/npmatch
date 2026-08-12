@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Link, Spinner } from "@heroui/react";
-import { fetchAnalytics } from "@/lib/analytics";
-import type { AnalyticsData, PageView, SearchEvent, TopItem } from "@/types";
+import { analyticsErrorMessage, fetchAnalytics } from "@/lib/analytics";
+import type { AnalyticsResult, AnalyticsSummary, PageView, SearchEvent, TopItem } from "@/types";
 
 const TOKEN_KEY = "npmatch.analytics.token";
 
@@ -13,7 +13,7 @@ export default function AnalyticsPage() {
   const [status, setStatus] = useState<Status>("loading");
   const [token, setToken] = useState("");
   const [savedToken, setSavedToken] = useState<string | null>(null);
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [result, setResult] = useState<AnalyticsResult | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -29,19 +29,21 @@ export default function AnalyticsPage() {
     if (!savedToken) return;
     let cancelled = false;
     setStatus("loading");
-    fetchAnalytics(savedToken)
-      .then((d) => {
-        if (!cancelled) {
-          setData(d);
-          setStatus("done");
+    fetchAnalytics(savedToken).then((r) => {
+      if (cancelled) return;
+      if (r.summary !== null) {
+        // Only persist a token that was just validated
+        window.sessionStorage.setItem(TOKEN_KEY, savedToken);
+        setResult(r);
+        setStatus("done");
+      } else {
+        if (r.errors.summary === 401) {
+          window.sessionStorage.removeItem(TOKEN_KEY);
         }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError("Wrong token or analytics backend unreachable.");
-          setStatus("error");
-        }
-      });
+        setError(analyticsErrorMessage(r.errors.summary ?? null));
+        setStatus("error");
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -51,14 +53,13 @@ export default function AnalyticsPage() {
     e.preventDefault();
     const trimmed = token.trim();
     if (!trimmed) return;
-    window.sessionStorage.setItem(TOKEN_KEY, trimmed);
     setSavedToken(trimmed);
   };
 
   const handleLock = useCallback(() => {
     window.sessionStorage.removeItem(TOKEN_KEY);
     setSavedToken(null);
-    setData(null);
+    setResult(null);
     setToken("");
     setStatus("gate");
   }, []);
@@ -121,15 +122,34 @@ export default function AnalyticsPage() {
             </div>
           )}
 
-          {status === "done" && data && <Dashboard data={data} onLock={handleLock} />}
+          {status === "done" && result && result.summary && (
+            <Dashboard
+              summary={result.summary}
+              visits={result.visits}
+              searches={result.searches}
+              errors={result.errors}
+              onLock={handleLock}
+            />
+          )}
         </div>
       </main>
     </>
   );
 }
 
-function Dashboard({ data, onLock }: { data: AnalyticsData; onLock: () => void }) {
-  const { summary } = data;
+function Dashboard({
+  summary,
+  visits,
+  searches,
+  errors,
+  onLock,
+}: {
+  summary: AnalyticsSummary;
+  visits: PageView[] | null;
+  searches: SearchEvent[] | null;
+  errors: AnalyticsResult["errors"];
+  onLock: () => void;
+}) {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -159,8 +179,8 @@ function Dashboard({ data, onLock }: { data: AnalyticsData; onLock: () => void }
         <TopList title="Top referrers" items={summary.top_referrers} />
       </div>
 
-      <RecentVisits visits={data.visits} />
-      <RecentSearches searches={data.searches} />
+      <RecentVisits visits={visits} error={analyticsErrorMessage(errors.visits ?? null)} />
+      <RecentSearches searches={searches} error={analyticsErrorMessage(errors.searches ?? null)} />
     </div>
   );
 }
@@ -201,78 +221,90 @@ function TopList({ title, items }: { title: string; items: TopItem[] }) {
   );
 }
 
-function RecentVisits({ visits }: { visits: PageView[] }) {
+function RecentVisits({ visits, error }: { visits: PageView[] | null; error: string }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-[11px] font-mono text-white/30 uppercase tracking-widest">Recent visitors</h2>
-      <div className="border border-white/10 rounded-xl bg-white/[0.03] overflow-x-auto">
-        <table className="w-full text-left text-sm font-mono">
-          <thead>
-            <tr className="text-white/30 text-xs">
-              <th className="px-4 py-2 font-medium">Time</th>
-              <th className="px-4 py-2 font-medium">Visitor</th>
-              <th className="px-4 py-2 font-medium">Referrer</th>
-              <th className="px-4 py-2 font-medium">User agent</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {visits.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-3 text-white/30">
-                  No visits yet
-                </td>
+      {visits === null ? (
+        <div className="border border-white/10 rounded-xl bg-white/[0.03] px-4 py-3 text-sm font-mono text-white/40">
+          Failed to load recent visitors — {error}
+        </div>
+      ) : (
+        <div className="border border-white/10 rounded-xl bg-white/[0.03] overflow-x-auto">
+          <table className="w-full text-left text-sm font-mono">
+            <thead>
+              <tr className="text-white/30 text-xs">
+                <th className="px-4 py-2 font-medium">Time</th>
+                <th className="px-4 py-2 font-medium">Visitor</th>
+                <th className="px-4 py-2 font-medium">Referrer</th>
+                <th className="px-4 py-2 font-medium">User agent</th>
               </tr>
-            )}
-            {visits.map((v, i) => (
-              <tr key={`${v.visited_at}-${i}`} className="text-white/70">
-                <td className="px-4 py-2 whitespace-nowrap">{formatTime(v.visited_at)}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{v.ip_hash.slice(0, 8)}…</td>
-                <td className="px-4 py-2 whitespace-nowrap">{referrerDomain(v.referrer)}</td>
-                <td className="px-4 py-2 truncate max-w-[20rem] text-white/40">{v.user_agent}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {visits.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-3 text-white/30">
+                    No visits yet
+                  </td>
+                </tr>
+              )}
+              {visits.map((v, i) => (
+                <tr key={`${v.visited_at}-${i}`} className="text-white/70">
+                  <td className="px-4 py-2 whitespace-nowrap">{formatTime(v.visited_at)}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{v.ip_hash.slice(0, 8)}…</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{referrerDomain(v.referrer)}</td>
+                  <td className="px-4 py-2 truncate max-w-[20rem] text-white/40">{v.user_agent}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
 
-function RecentSearches({ searches }: { searches: SearchEvent[] }) {
+function RecentSearches({ searches, error }: { searches: SearchEvent[] | null; error: string }) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-[11px] font-mono text-white/30 uppercase tracking-widest">Recent searches</h2>
-      <div className="border border-white/10 rounded-xl bg-white/[0.03] overflow-x-auto">
-        <table className="w-full text-left text-sm font-mono">
-          <thead>
-            <tr className="text-white/30 text-xs">
-              <th className="px-4 py-2 font-medium">Time</th>
-              <th className="px-4 py-2 font-medium">Query</th>
-              <th className="px-4 py-2 font-medium">Framework</th>
-              <th className="px-4 py-2 font-medium">Priorities</th>
-              <th className="px-4 py-2 font-medium">Results</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {searches.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-3 text-white/30">
-                  No searches yet
-                </td>
+      {searches === null ? (
+        <div className="border border-white/10 rounded-xl bg-white/[0.03] px-4 py-3 text-sm font-mono text-white/40">
+          Failed to load recent searches — {error}
+        </div>
+      ) : (
+        <div className="border border-white/10 rounded-xl bg-white/[0.03] overflow-x-auto">
+          <table className="w-full text-left text-sm font-mono">
+            <thead>
+              <tr className="text-white/30 text-xs">
+                <th className="px-4 py-2 font-medium">Time</th>
+                <th className="px-4 py-2 font-medium">Query</th>
+                <th className="px-4 py-2 font-medium">Framework</th>
+                <th className="px-4 py-2 font-medium">Priorities</th>
+                <th className="px-4 py-2 font-medium">Results</th>
               </tr>
-            )}
-            {searches.map((s, i) => (
-              <tr key={`${s.searched_at}-${i}`} className="text-white/70">
-                <td className="px-4 py-2 whitespace-nowrap">{formatTime(s.searched_at)}</td>
-                <td className="px-4 py-2">{s.query}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{s.framework ?? "any"}</td>
-                <td className="px-4 py-2">{s.priorities?.join(", ") ?? "—"}</td>
-                <td className="px-4 py-2">{s.result_count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {searches.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-3 text-white/30">
+                    No searches yet
+                  </td>
+                </tr>
+              )}
+              {searches.map((s, i) => (
+                <tr key={`${s.searched_at}-${i}`} className="text-white/70">
+                  <td className="px-4 py-2 whitespace-nowrap">{formatTime(s.searched_at)}</td>
+                  <td className="px-4 py-2">{s.query}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{s.framework ?? "any"}</td>
+                  <td className="px-4 py-2">{s.priorities?.join(", ") ?? "—"}</td>
+                  <td className="px-4 py-2">{s.result_count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }

@@ -3,10 +3,14 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import AnalyticsPage from "../../app/analytics/page";
 import { fetchAnalytics } from "@/lib/analytics";
-import type { AnalyticsData } from "@/types";
+import type { AnalyticsData, AnalyticsResult } from "@/types";
 
 jest.mock("@/lib/analytics", () => ({
   fetchAnalytics: jest.fn(),
+  analyticsErrorMessage: jest.fn(
+    (status: number | null) =>
+      status === 401 ? "Wrong token." : "Analytics backend unreachable."
+  ),
 }));
 
 const mockFetchAnalytics = fetchAnalytics as jest.Mock;
@@ -43,6 +47,15 @@ const mockData: AnalyticsData = {
   ],
 };
 
+function okResult(): AnalyticsResult {
+  return {
+    summary: mockData.summary,
+    visits: mockData.visits,
+    searches: mockData.searches,
+    errors: {},
+  };
+}
+
 describe("AnalyticsPage", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
@@ -58,7 +71,7 @@ describe("AnalyticsPage", () => {
 
   it("unlocks with a token and renders the dashboard", async () => {
     const user = userEvent.setup();
-    mockFetchAnalytics.mockResolvedValue(mockData);
+    mockFetchAnalytics.mockResolvedValue(okResult());
 
     render(<AnalyticsPage />);
     const input = await screen.findByLabelText("Analytics token");
@@ -76,9 +89,22 @@ describe("AnalyticsPage", () => {
     expect(screen.getAllByText("react").length).toBeGreaterThan(0);
   });
 
+  it("persists a validated token to sessionStorage", async () => {
+    const user = userEvent.setup();
+    mockFetchAnalytics.mockResolvedValue(okResult());
+
+    render(<AnalyticsPage />);
+    const input = await screen.findByLabelText("Analytics token");
+    await user.type(input, "secret");
+    await user.click(screen.getByRole("button", { name: /Unlock/i }));
+
+    await screen.findByText("42");
+    expect(window.sessionStorage.getItem(TOKEN_KEY)).toBe("secret");
+  });
+
   it("renders the dashboard directly when a token is already stored", async () => {
     window.sessionStorage.setItem(TOKEN_KEY, "stored-token");
-    mockFetchAnalytics.mockResolvedValue(mockData);
+    mockFetchAnalytics.mockResolvedValue(okResult());
 
     render(<AnalyticsPage />);
 
@@ -86,17 +112,78 @@ describe("AnalyticsPage", () => {
     expect(mockFetchAnalytics).toHaveBeenCalledWith("stored-token");
   });
 
-  it("shows an error message when the token is wrong", async () => {
+  it("shows a distinct wrong-token error and does not persist a bad token", async () => {
     const user = userEvent.setup();
-    mockFetchAnalytics.mockRejectedValue(new Error("401"));
+    mockFetchAnalytics.mockResolvedValue({
+      summary: null,
+      visits: null,
+      searches: null,
+      errors: { summary: 401, visits: 401, searches: 401 },
+    });
 
     render(<AnalyticsPage />);
     const input = await screen.findByLabelText("Analytics token");
     await user.type(input, "wrong");
     await user.click(screen.getByRole("button", { name: /Unlock/i }));
 
+    expect(await screen.findByText("Wrong token.")).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+  });
+
+  it("shows a backend-unreachable error for a 5xx summary failure", async () => {
+    const user = userEvent.setup();
+    mockFetchAnalytics.mockResolvedValue({
+      summary: null,
+      visits: null,
+      searches: null,
+      errors: { summary: 502, visits: 502, searches: 502 },
+    });
+
+    render(<AnalyticsPage />);
+    const input = await screen.findByLabelText("Analytics token");
+    await user.type(input, "secret");
+    await user.click(screen.getByRole("button", { name: /Unlock/i }));
+
     expect(
-      await screen.findByText(/Wrong token or analytics backend unreachable/i)
+      await screen.findByText("Analytics backend unreachable.")
     ).toBeInTheDocument();
+  });
+
+  it("clears a stored token that comes back 401", async () => {
+    window.sessionStorage.setItem(TOKEN_KEY, "stale-token");
+    mockFetchAnalytics.mockResolvedValue({
+      summary: null,
+      visits: null,
+      searches: null,
+      errors: { summary: 401, visits: 401, searches: 401 },
+    });
+
+    render(<AnalyticsPage />);
+
+    expect(await screen.findByText("Wrong token.")).toBeInTheDocument();
+    expect(window.sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+  });
+
+  it("degrades gracefully when only the searches endpoint fails", async () => {
+    const user = userEvent.setup();
+    mockFetchAnalytics.mockResolvedValue({
+      summary: mockData.summary,
+      visits: mockData.visits,
+      searches: null,
+      errors: { searches: 502 },
+    });
+
+    render(<AnalyticsPage />);
+    const input = await screen.findByLabelText("Analytics token");
+    await user.type(input, "secret");
+    await user.click(screen.getByRole("button", { name: /Unlock/i }));
+
+    expect(await screen.findByText("42")).toBeInTheDocument();
+    expect(screen.getByText("Recent visitors")).toBeInTheDocument();
+    expect(screen.getByText("a1b2c3d4…")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Failed to load recent searches/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No searches yet")).not.toBeInTheDocument();
   });
 });

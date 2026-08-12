@@ -94,9 +94,9 @@ async def analytics_summary(request: Request):
     _require_analytics_token(request)
     try:
         return await get_analytics_summary()
-    except Exception as e:
-        logger.error(f"Analytics summary failed: {e}")
-        raise HTTPException(status_code=502, detail="Analytics query failed") from e
+    except Exception:
+        logger.exception("Analytics summary failed")
+        raise HTTPException(status_code=502, detail="Analytics query failed") from None
 
 
 @app.get("/api/analytics/visits")
@@ -104,9 +104,9 @@ async def analytics_visits(request: Request, limit: int = 50):
     _require_analytics_token(request)
     try:
         return await list_page_views(limit=min(limit, 200))
-    except Exception as e:
-        logger.error(f"Analytics visits failed: {e}")
-        raise HTTPException(status_code=502, detail="Analytics query failed") from e
+    except Exception:
+        logger.exception("Analytics visits failed")
+        raise HTTPException(status_code=502, detail="Analytics query failed") from None
 
 
 @app.get("/api/analytics/searches")
@@ -114,9 +114,9 @@ async def analytics_searches(request: Request, limit: int = 50):
     _require_analytics_token(request)
     try:
         return await list_searches(limit=min(limit, 200))
-    except Exception as e:
-        logger.error(f"Analytics searches failed: {e}")
-        raise HTTPException(status_code=502, detail="Analytics query failed") from e
+    except Exception:
+        logger.exception("Analytics searches failed")
+        raise HTTPException(status_code=502, detail="Analytics query failed") from None
 
 
 @app.post("/api/search")
@@ -129,9 +129,9 @@ async def search(request: Request, body: SearchRequest):
 
     try:
         packages = await package_search(body.query)
-    except Exception as e:
-        logger.error(f"Package search failed: {e}")
-        raise HTTPException(status_code=502, detail="Failed in hybrid search") from e
+    except Exception:
+        logger.exception("Package search failed")
+        raise HTTPException(status_code=502, detail="Failed in hybrid search") from None
 
     try:
         await record_search(

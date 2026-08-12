@@ -76,3 +76,13 @@ export interface AnalyticsData {
   visits: PageView[];
   searches: SearchEvent[];
 }
+
+export type AnalyticsSection = "summary" | "visits" | "searches";
+
+export interface AnalyticsResult {
+  summary: AnalyticsSummary | null;
+  visits: PageView[] | null;
+  searches: SearchEvent[] | null;
+  /** Per-section HTTP status on failure; null means a network error. Absent = success. */
+  errors: Partial<Record<AnalyticsSection, number | null>>;
+}
