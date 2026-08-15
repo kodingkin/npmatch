@@ -7,7 +7,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 import app.env
 from app.llm import stream_response
@@ -27,7 +26,22 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="npmatch", version="1.0.0", lifespan=lifespan)
 
-limiter = Limiter(key_func=get_remote_address)
+
+def rate_limit_key(request: Request) -> str:
+    """Key rate limits by the real client IP.
+
+    The backend sits behind the Next.js proxy, so request.client.host is the
+    proxy, not the user. The proxy forwards X-Forwarded-For; take the leftmost
+    (client-supplied) entry, falling back to the direct peer. This is only safe
+    because clients cannot reach the backend directly.
+    """
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+limiter = Limiter(key_func=rate_limit_key)
 app.state.limiter = limiter
 
 allowed_origins = os.environ.get(
@@ -51,7 +65,7 @@ async def health():
 
 
 @app.post("/api/search")
-@limiter.limit("2/minute")
+@limiter.limit("10/minute")
 async def search(request: Request, body: SearchRequest):
     logger.info(
         f"Search request: query='{body.query}' "
@@ -108,5 +122,5 @@ async def search(request: Request, body: SearchRequest):
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache"},
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
