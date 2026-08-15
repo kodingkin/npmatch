@@ -94,14 +94,6 @@ async def _fts_search(query: str) -> list[str]:
     return [row["name"] for row in rows]
 
 
-def _rrf(rankings: list[list[str]], k: int = 60) -> list[str]:
-    scores: dict[str, float] = {}
-    for ranking in rankings:
-        for rank, name in enumerate(ranking, start=1):
-            scores[name] = scores.get(name, 0) + 1 / (k + rank)
-    return sorted(scores, key=lambda n: scores[n], reverse=True)
-
-
 async def _fetch_metadata(names: list[str]) -> list[dict]:
     pool = await get_pool()
     rows = await pool.fetch(
