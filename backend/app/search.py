@@ -2,9 +2,10 @@ import asyncio
 import logging
 import os
 
-import asyncpg
 from openai import AsyncOpenAI
 from qdrant_client import AsyncQdrantClient
+
+from app.db import get_pool
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -39,19 +40,6 @@ def get_qdrant_client() -> AsyncQdrantClient:
 
 COLLECTION_NAME = "npmatch"
 CANDIDATE_LIMIT = 20
-
-_pg_pool: asyncpg.Pool | None = None
-
-
-async def _get_pool() -> asyncpg.Pool:
-    global _pg_pool
-    if _pg_pool is None:
-        _pg_pool = await asyncpg.create_pool(
-            dsn=os.environ["DATABASE_CONNECTION_STRING"],
-            min_size=1,
-            max_size=5,
-        )
-    return _pg_pool
 
 
 def _rrf(rankings: list[list[str]], k: int = 60) -> list[str]:
@@ -89,7 +77,7 @@ async def _vector_search(embedding: list[float]) -> list[str]:
 
 
 async def _fts_search(query: str) -> list[str]:
-    pool = await _get_pool()
+    pool = await get_pool()
     rows = await pool.fetch(
         """
         SELECT name,
@@ -115,7 +103,7 @@ def _rrf(rankings: list[list[str]], k: int = 60) -> list[str]:
 
 
 async def _fetch_metadata(names: list[str]) -> list[dict]:
-    pool = await _get_pool()
+    pool = await get_pool()
     rows = await pool.fetch(
         "SELECT name, description, keywords, version FROM packages WHERE name = ANY($1)",
         names,

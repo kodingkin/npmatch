@@ -5,18 +5,17 @@ const API_URL = process.env.API_URL ?? "http://localhost:8000";
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  const upstreamHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   // Forward the client's IP so the backend can rate-limit per user instead of
   // per proxy instance. The backend is only reachable through this route.
-  const forwardedFor =
-    req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip");
-  if (forwardedFor) upstreamHeaders["x-forwarded-for"] = forwardedFor;
+  const xff = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip");
+  if (xff) headers["x-forwarded-for"] = xff;
+  const userAgent = req.headers.get("user-agent");
+  if (userAgent) headers["user-agent"] = userAgent;
 
   const upstream = await fetch(`${API_URL}/api/search`, {
     method: "POST",
-    headers: upstreamHeaders,
+    headers,
     body: JSON.stringify(body),
   });
 

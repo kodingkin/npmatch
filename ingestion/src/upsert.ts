@@ -61,6 +61,39 @@ async function ensurePgTable(): Promise<void> {
     ON packages USING GIN(search_vector)
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS page_views (
+      id BIGSERIAL PRIMARY KEY,
+      visited_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      ip_hash TEXT,
+      user_agent TEXT,
+      referrer TEXT
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_page_views_visited_at
+    ON page_views (visited_at DESC)
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS search_events (
+      id BIGSERIAL PRIMARY KEY,
+      searched_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      query TEXT NOT NULL,
+      framework TEXT,
+      priorities TEXT,
+      result_count INTEGER,
+      ip_hash TEXT,
+      user_agent TEXT
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_search_events_searched_at
+    ON search_events (searched_at DESC)
+  `);
+
   console.log("Postgres table ready");
 }
 

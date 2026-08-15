@@ -1,11 +1,11 @@
 # CLAUDE.md - Frontend
 
-Next.js 15 app with HeroUI v3, Tailwind CSS v4, and Jest.
+Next.js 16 app with HeroUI v3, Tailwind CSS v4, and Jest.
 
 ## Commands
 
 ```bash
-npm run dev       # Next.js dev server (port 3000)
+npm run dev       # Next.js dev server (port 3000, Turbopack)
 npm run build     # Production build
 npm run lint      # ESLint on app/ directory
 npm run lint:fix  # ESLint auto-fix
@@ -48,3 +48,11 @@ The SSE parser in `useSearch` handles `event: packages`, `data:`, `event: error`
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+
+## Turbopack troubleshooting
+
+If `next dev` hangs silently after `▲ Next.js 16.3.0 (Turbopack)` and never binds port 3000, the most likely cause is a stale `node_modules`. Run `rm -rf node_modules && npm install` to fix.
+
+Binary-search isolation confirmed this is NOT caused by: `"type": "module"`, `next.config.ts` settings, dependency set, or app code — all work fine with fresh node_modules.
+
