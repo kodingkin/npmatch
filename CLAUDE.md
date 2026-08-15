@@ -46,7 +46,7 @@ npm run lint         # ESLint
 
 - **Frontend API route** (`frontend/app/api/search/route.ts`) proxies to backend — hides backend URL and secrets from the browser
 - **Backend search** is a hybrid: concurrent vector search (Qdrant) + FTS (Postgres), fused with Reciprocal Rank Fusion (RRF)
-- **Rate limiting**: backend limits `/api/search` to 2 requests/minute per IP (slowapi)
+- **Rate limiting**: backend limits `/api/search` to 10 requests/minute per client IP (slowapi, keyed on `X-Forwarded-For` — the Next.js proxy forwards the real client IP)
 - **SSE protocol**: backend streams `event: packages`, `data:` chunks, `event: done`/`event: error`
 - **Tests**: Jest (frontend), pytest + pytest-asyncio (backend), Jest + ts-jest (ingestion)
 - **CI**: path-filtered workflows per service — changes to `frontend/` trigger frontend CI, etc.

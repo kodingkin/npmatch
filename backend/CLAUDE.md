@@ -40,11 +40,13 @@ GET  /health         → {"status": "ok"}
 - **Qdrant** (AsyncQdrantClient) — vector DB, cosine distance
 - **Postgres** (asyncpg) — metadata + full-text search with `tsvector` + GIN index
 - **OpenAI** — `text-embedding-3-small` for queries, `gpt-4o` for streaming recommendations
-- **slowapi** — rate limiting at 2 req/min per IP
+- **slowapi** — rate limiting at 10 req/min per client IP
 
 ## Rate limiting
 
-`/api/search` is limited to **2 requests per minute** per remote address (slowapi + `get_remote_address`).
+`/api/search` is limited to **10 requests per minute** per client IP. The limiter keys on the
+leftmost `X-Forwarded-For` entry (the Next.js proxy forwards the real client IP), falling back to
+the direct peer. See `rate_limit_key()` in `app/main.py`.
 
 ## Testing
 
